@@ -1,0 +1,1 @@
+Annotation tool used for Biomedical Figures classification
