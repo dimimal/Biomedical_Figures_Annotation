@@ -1,5 +1,4 @@
 #! /usr/bin/python
-#from __future__ import print_function
 
 from PyQt5 import QtWidgets, QtGui#QMainWindow, QApplication, QAction, QFileDialog
 from PyQt5 import QtCore
@@ -13,13 +12,10 @@ import glob
 import os
 import numpy as np
 import re
-# Load Opencv to make resizes 
+
+# skimage for image processing 
 from skimage.feature import hog
 from skimage.io import imread 
-
-#import cv2 as cv
-# matplotlib for colormaps
-#from matplotlib import pyplot as plt
 
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
@@ -70,25 +66,39 @@ class Viewer(QtWidgets.QMainWindow):
         self.toolbar.addAction(exitAction)
         exitAction.setToolTip('Exit')           
 
+        self.initDocks()
         # Open main window in full screen
         self.showFullScreen()
         self.show()
-        
+
+    def createDock(self, area):
+        """Pass the parameters to embed the 
+        docks properly : e.g. area = Qt.RightDockWidgetArea
+        """
+        dock = QtWidgets.QDockWidget()
+        dock.setAllowedAreas(area)
+        dock.setFloating(False)
+        dock.setFeatures(QtCore.Qt.NoDockWidgetFeatures)
+        dock.addDockWidget(area, dock)
+        return dock.widget()
+
     def initDocks(self):
-    	# Inititalize Dock window( move into method!)
-        self.dock       = QtWidgets.QDockWidget()
-        self.plotWidget = pg.GraphicsLayoutWidget()
-        self.dock.setWidget(self.plotWidget)
-        self.dock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea)
-        self.dock.setFloating(False)
-        self.dock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.dock)
+        """Initialize the docks inside the Main window
+        """
+        # Initialize the docks to show the figures that will be
+        # corrected by the user
+        self.lineFigureShow = self.createDock(QtCore.Qt.LeftDockWidgetArea)
+        self.barFigureShow  = self.createDock(QtCore.Qt.LeftDockWidgetArea)
+        #
+        # The classification docks are initialized below
+        self.lineClassification = self.createDock(QtCore.Qt.RightDockWidgetArea)
+        self.barClassification  = self.createDock(QtCore.Qt.RightDockWidgetArea)
 
     def getFigures(self):
         #dir_path     = os.path.dirname(os.path.realpath(__file__))
-        dir_path     = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/'
+        dir_path     = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/' # For development purposes only
         message      = 'Select Folder or pkl file' 
-        folderDialog = QtWidgets.QFileDialog(self, message, dir_path)#.(self, message, dir_path, QtGui.QFileDialog.DirectoryOnly )
+        folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.Directory)
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         folderName   = [] # Returns a list of the directory
@@ -112,15 +122,15 @@ class Viewer(QtWidgets.QMainWindow):
                         for file in files:
                             if self.imageExt in file:
                                 self.figures.append(os.path.join(subdir,file))
-                    self.featureExtraction()# Debug only
+                    #self.featureExtraction()# Debug only
                 if not self.figures:
                     message = 'jpg image files not found in path: '+ directory
                     self.messageBox(message)
                 else:
-                    self.loadFigures()#directory)
+                    self.loadFigures()
 
     def loadFigures(self):
-        """load the figures from path to an numpy array?
+        """load the figures from path to numpy array?
         """
         pass
 
@@ -142,19 +152,17 @@ class Viewer(QtWidgets.QMainWindow):
             else:
                 self.features.concatenate(feats.flatten(), axis=0)
 
-        '''For pyqtGraph only
-        self.plotWidget.addItem(self.features)
-        self.plotWidget.addPlot(row=1, col=0)
-        self.plotWidget.plotItem(self.features)
-		'''
+    '''
     def clustering(self):
         """Contains the clustering algorithms for usage (e.g K-means)
-        TODO: Add more Clustering options
+        TODO: Probably will be removed
         """
         kmeans = KMeans(n_clusters=2, random_state=0).fit(self.features)
-
+    '''
 
     def savePkl(self):
+        """Save using joblib package
+        """
         pass
     
     def messageBox(self, message):
@@ -165,7 +173,6 @@ class Viewer(QtWidgets.QMainWindow):
         msg.exec_()
 
     def closeEvent(self, event):
-        #
         event.accept()
 
     def displayHelpMessage(self):

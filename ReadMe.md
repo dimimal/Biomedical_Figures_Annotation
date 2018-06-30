@@ -8,6 +8,6 @@ Annotation tool to annotate figures from Biomedical literature.
 * numpy
 * pandas
 
-Run `pip install requirements.txt` to automatically install the dependencies in your environment. 
+Run `pip install -r requirements.txt` to automatically install the dependencies in your environment. 
 
 
