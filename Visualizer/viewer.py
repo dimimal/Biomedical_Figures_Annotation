@@ -1,14 +1,14 @@
-#! /usr/bin/python
+#! /usr/bin/env python3
 
-from PyQt5 import QtWidgets, QtGui#QMainWindow, QApplication, QAction, QFileDialog
+from PyQt5 import QtWidgets, QtGui
 from PyQt5 import QtCore
 #import pyqtgraph  as pg
 from sklearn.externals import joblib
-from sklearn.cluster import KMeans
+#from sklearn.cluster import KMeans
 
 import random 
 import sys
-import glob
+#import glob
 import os
 import numpy as np
 import re
@@ -35,9 +35,18 @@ class Viewer(QtWidgets.QMainWindow):
         self.clusterMethod = ''
         # Lis of paths of the figures
         self.figures       = []
+        
+        # should be omitted in the future
+        self.loadFigure()
 
         # Instantiate the window
         self.initUI()
+
+    def loadFigure(self):
+        """Loads figure for debug purposes only
+        """
+        path = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC1949492/pone.0000796.e001.jpg'
+        self.figure = imread(path)
 
     def initUI(self):
         """Initialize the UI 
@@ -47,17 +56,13 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Add the tool buttons
         iconDir = os.path.join( os.path.dirname(sys.argv[0]) , 'icons' )
-
-        # Loading a new city
+        #
         loadAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'open.png' )), '&Tools', self)
         loadAction.setShortcuts(['o'])
         #
-        loadAction.triggered.connect( self.getFigures )
+        loadAction.triggered.connect( self.loadPredictions )
         self.toolbar.addAction(loadAction)
         loadAction.setToolTip('Open file')
-
-        # Select feature extraction method 
-        selectFeatures = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'feats.png' )), '&Tools', self)
 
         # Close the application
         exitAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'exit.png' )), '&Tools', self)
@@ -69,65 +74,63 @@ class Viewer(QtWidgets.QMainWindow):
         self.initDocks()
         # Open main window in full screen
         self.showFullScreen()
+        # Show
         self.show()
 
-    def createDock(self, area):
-        """Pass the parameters to embed the 
-        docks properly : e.g. area = Qt.RightDockWidgetArea
+    def loadPredictions(self):
+        """Load the joblib file which contains the dictionary of 
+        predictions
         """
-        dock = QtWidgets.QDockWidget()
-        dock.setAllowedAreas(area)
-        dock.setFloating(False)
-        dock.setFeatures(QtCore.Qt.NoDockWidgetFeatures)
-        dock.addDockWidget(area, dock)
-        return dock.widget()
+        dir_path    = os.path.dirname(os.path.realpath(__file__))
+        #dir_path     = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/' # For development purposes only
+        message      = 'Select pkl file' 
+        folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
+        folderDialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        folderDialog.setNameFilter('Pkl files (*.pkl)')
+        folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
+        fileName   = [] # Returns a list of the directory
+
+        # Check
+        if folderDialog.exec_():
+            fileName = folderDialog.selectedFiles()
+            if self.joblibExt in str(fileName): # if it is a pkl file handle it properly
+                self.feats = joblib.load(str(fileName))
+            else:
+                message = 'Only pkl files'
+                self.messageBox(message)
 
     def initDocks(self):
         """Initialize the docks inside the Main window
         """
         # Initialize the docks to show the figures that will be
         # corrected by the user
-        self.lineFigureShow = self.createDock(QtCore.Qt.LeftDockWidgetArea)
-        self.barFigureShow  = self.createDock(QtCore.Qt.LeftDockWidgetArea)
+        self.lineFigureDock = QtWidgets.QDockWidget()
+        self.lineFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
+        self.lineFigureDock.setFloating(False)
+        self.lineFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.lineFigureDock.setWidget(QtWidgets.QWidget(QtGui.QPixmap(QtGui.QImage(self.figure, self.figure.shape[0], 
+                    self.figure.shape[1], self.figure.shape[1]*3, QtGui.QImage.Format_RGB888))))
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.lineFigureDock)        
+        #
+        self.barFigureDock = QtWidgets.QDockWidget()
+        self.barFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
+        self.barFigureDock.setFloating(False)
+        self.barFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.barFigureDock)
         #
         # The classification docks are initialized below
-        self.lineClassification = self.createDock(QtCore.Qt.RightDockWidgetArea)
-        self.barClassification  = self.createDock(QtCore.Qt.RightDockWidgetArea)
-
-    def getFigures(self):
-        #dir_path     = os.path.dirname(os.path.realpath(__file__))
-        dir_path     = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/' # For development purposes only
-        message      = 'Select Folder or pkl file' 
-        folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
-        folderDialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
-        folderName   = [] # Returns a list of the directory
-
-        # If the folderdialog enabled 
-        if folderDialog.exec_():
-            folderName = folderDialog.selectedFiles()
-
-        if not folderName:
-            message = 'Please, select a directory that includes jpg image files or joblib file'
-            self.messageBox(message)
-        else:
-            if self.joblibExt in str(folderName): # if it is a pkl file handle it properly
-                self.data = joblib.load(str(folderName))
-
-            else:
-                directory = str(folderName[0])
-                # Iterate the directory and return the paths of the figures
-                if os.path.isdir(directory):
-                    for subdir, dirs, files in os.walk(directory):
-                        for file in files:
-                            if self.imageExt in file:
-                                self.figures.append(os.path.join(subdir,file))
-                    #self.featureExtraction()# Debug only
-                if not self.figures:
-                    message = 'jpg image files not found in path: '+ directory
-                    self.messageBox(message)
-                else:
-                    self.loadFigures()
+        self.lineClassificationDock = QtWidgets.QDockWidget()
+        self.lineClassificationDock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea)
+        self.lineClassificationDock.setFloating(False)
+        self.lineClassificationDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.lineClassificationDock)
+        #self.lineClassificationDock.setWidget()
+        # 
+        self.barClassificationDock = QtWidgets.QDockWidget()
+        self.barClassificationDock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea)
+        self.barClassificationDock.setFloating(False)
+        self.barClassificationDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.barClassificationDock)
 
     def loadFigures(self):
         """load the figures from path to numpy array?

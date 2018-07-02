@@ -93,7 +93,6 @@ def layerNames(model):
 
 def parseArguments():
     # Define parser
-    # 
     parser = argparse.ArgumentParser(description='Process arguments')
     parser.add_argument('-n', '--network', nargs=1)
     parser.add_argument('-l', '--layer', nargs='+')

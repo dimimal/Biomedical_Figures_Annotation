@@ -20,7 +20,7 @@ from keras.applications.resnet50 import ResNet50, preprocess_input
 PATH      = '/home/dimitris/GitProjects/Biomedical_Figure_Annotator/model.pkl'
 TEST_PATH = '/home/dimitris/GitProjects/Biomedical_Figure_Annotator/test_data.csv'
 
-def plot_results():
+def save_predictions():
     pass
 
 def parse_arguments():
@@ -39,7 +39,7 @@ def check_args(args):
         sys.exit(-1)
 
 def load_data(path):
-    data_frame = pd.read_csv(path, header=None)#, index_col=0)
+        data_frame = pd.read_csv(path, header=None)
     return data_frame[0].tolist(), np.array(data_frame[1].values)
 
 def main(args):
@@ -65,6 +65,7 @@ def main(args):
     print('Score {}'.format(score))
     print('Predictions {}'.format(predictions))
     print('labels {}'.format(labels))
+
 if __name__ == '__main__':
     args = parse_arguments()
     main(args)
