@@ -102,14 +102,25 @@ class Viewer(QtWidgets.QMainWindow):
     def initDocks(self):
         """Initialize the docks inside the Main window
         """
+        # Define the grid of widgets
+        gridLayout = QtWidgets.QGridLayout()
+        
+        self.lineFigure = QtGui.QImage()
+        #self.lineFigureWidget = QtWidgets.QWidget()
+        label = QtGui.QLabel()
+        label.setLayout()
+
+
+
+        gridLayout.addWidget(self.lineFigureWidget, 0, 0, 1, 1)
         # Initialize the docks to show the figures that will be
         # corrected by the user
-        self.lineFigureDock = QtWidgets.QDockWidget()
-        self.lineFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
-        self.lineFigureDock.setFloating(False)
-        self.lineFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        self.lineFigureDock.setWidget(QtWidgets.QWidget(QtGui.QPixmap(QtGui.QImage(self.figure, self.figure.shape[0], 
-                    self.figure.shape[1], self.figure.shape[1]*3, QtGui.QImage.Format_RGB888))))
+        #self.lineFigureDock = QtWidgets.QDockWidget()
+        #self.lineFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
+        #self.lineFigureDock.setFloating(False)
+        #self.lineFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        #self.lineFigureDock.setWidget(QtWidgets.QWidget(QtGui.QPixmap(QtGui.QImage(self.figure, self.figure.shape[0], 
+        #            self.figure.shape[1], self.figure.shape[1]*3, QtGui.QImage.Format_RGB888))))
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.lineFigureDock)        
         #
         self.barFigureDock = QtWidgets.QDockWidget()
@@ -183,6 +194,31 @@ class Viewer(QtWidgets.QMainWindow):
         """
         QtWidgets.QMessageBox.about(self, "This is the help message box")
         self.update()
+
+    def toQImage(self, im, copy=False):
+        """Transforms a numpy image to QImage
+        """
+        if im is None:
+            return QtGui.QImage()
+        
+        if im.dtype == np.uint8:
+            if len(im.shape) == 2:
+                gray_color_table = [qRgb(i, i, i) for i in range(256)]
+                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_Indexed8)
+                qim.setColorTable(gray_color_table)
+                return qim.copy() if copy else qim
+
+            elif len(im.shape) == 3:
+                if im.shape[2] == 3:
+                    qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888)
+                    return qim.copy() if copy else qim
+                elif im.shape[2] == 4:
+                    qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_ARGB32)
+                    return qim.copy() if copy else qim
+        
+        # Show Error message
+        message = 'Inconsistent data type {}'.format(im.dtype)
+        self.messageBox(message)
 
     # Destructor
     def __del__(self):
