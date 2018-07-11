@@ -102,52 +102,38 @@ class Viewer(QtWidgets.QMainWindow):
     def initDocks(self):
         """Initialize the docks inside the Main window
         """
+
         # Define the grid of widgets
-        gridLayout = QtWidgets.QGridLayout()
+        gridLayout = QtWidgets.QGridLayout()      
         
-        self.lineFigure = QtGui.QImage()
-        #self.lineFigureWidget = QtWidgets.QWidget()
-        label = QtGui.QLabel()
-        label.setLayout()
+        # Set QWidget object as main window in order to develop the 
+        # appropriate functions
+        widget = QtWidgets.QWidget(self)
+        widget.setLayout(gridLayout)
+        self.setCentralWidget(widget)
 
+        # Set the line figure widget 
+        lineFigure = QtGui.QImage()
+        lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
+        displayLineFigure = QtWidgets.QLabel('Line Figure')
+        displayLineFigure.setPixmap(QtGui.QPixmap.fromImage(lineFigure))
+        displayLineFigure.adjustSize()
+        #displayLineFigure.setText('Line Figure')
 
+        # Set the bar figure widget
+        barFigure = QtGui.QImage()
+        barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
+        displayBarFigure = QtWidgets.QLabel('Bar Figure')
+        displayBarFigure.setPixmap(QtGui.QPixmap.fromImage(lineFigure))
+        displayBarFigure.adjustSize()
+        
+        displayLineText = QtWidgets.QLabel('Line figure')
+        # Add widget to grid layout        
+        gridLayout.addWidget(displayLineText, 0, 0, QtCore.Qt.AlignLeft)
+        gridLayout.addWidget(displayLineFigure, 1, 0, QtCore.Qt.AlignLeft)
+        gridLayout.addWidget(displayBarFigure, 2, 0, QtCore.Qt.AlignLeft)
 
-        gridLayout.addWidget(self.lineFigureWidget, 0, 0, 1, 1)
-        # Initialize the docks to show the figures that will be
-        # corrected by the user
-        #self.lineFigureDock = QtWidgets.QDockWidget()
-        #self.lineFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
-        #self.lineFigureDock.setFloating(False)
-        #self.lineFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        #self.lineFigureDock.setWidget(QtWidgets.QWidget(QtGui.QPixmap(QtGui.QImage(self.figure, self.figure.shape[0], 
-        #            self.figure.shape[1], self.figure.shape[1]*3, QtGui.QImage.Format_RGB888))))
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.lineFigureDock)        
-        #
-        self.barFigureDock = QtWidgets.QDockWidget()
-        self.barFigureDock.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea)
-        self.barFigureDock.setFloating(False)
-        self.barFigureDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.barFigureDock)
-        #
-        # The classification docks are initialized below
-        self.lineClassificationDock = QtWidgets.QDockWidget()
-        self.lineClassificationDock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea)
-        self.lineClassificationDock.setFloating(False)
-        self.lineClassificationDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.lineClassificationDock)
-        #self.lineClassificationDock.setWidget()
-        # 
-        self.barClassificationDock = QtWidgets.QDockWidget()
-        self.barClassificationDock.setAllowedAreas(QtCore.Qt.RightDockWidgetArea)
-        self.barClassificationDock.setFloating(False)
-        self.barClassificationDock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.barClassificationDock)
-
-    def loadFigures(self):
-        """load the figures from path to numpy array?
-        """
-        pass
-
+        
     def featureExtraction(self):
         """Contains feature extraction techniques selected by the user 
         to use them along with a clustering method
@@ -194,9 +180,10 @@ class Viewer(QtWidgets.QMainWindow):
         """
         QtWidgets.QMessageBox.about(self, "This is the help message box")
         self.update()
-
+    
+    '''
     def toQImage(self, im, copy=False):
-        """Transforms a numpy image to QImage
+        """Transforms a numpy array image to QImage
         """
         if im is None:
             return QtGui.QImage()
@@ -219,19 +206,13 @@ class Viewer(QtWidgets.QMainWindow):
         # Show Error message
         message = 'Inconsistent data type {}'.format(im.dtype)
         self.messageBox(message)
+    '''
 
     # Destructor
     def __del__(self):
         return
 
-        
-
-def main():
-    """Main function, call the constructor to do the job
-    """
+if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)
     tool        = Viewer()
     sys.exit(application.exec_())
-
-if __name__ == '__main__':
-    main()
