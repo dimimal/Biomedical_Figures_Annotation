@@ -36,17 +36,8 @@ class Viewer(QtWidgets.QMainWindow):
         # Lis of paths of the figures
         self.figures       = []
         
-        # should be omitted in the future
-        self.loadFigure()
-
         # Instantiate the window
         self.initUI()
-
-    def loadFigure(self):
-        """Loads figure for debug purposes only
-        """
-        path = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC1949492/pone.0000796.e001.jpg'
-        self.figure = imread(path)
 
     def initUI(self):
         """Initialize the UI 
@@ -71,9 +62,16 @@ class Viewer(QtWidgets.QMainWindow):
         self.toolbar.addAction(exitAction)
         exitAction.setToolTip('Exit')           
 
+        # Init docked widgets
         self.initDocks()
+
+        # Enable mouse move events
+        self.setMouseTracking(True)
+        self.toolbar.setMouseTracking(True)
+        
         # Open main window in full screen
         self.showFullScreen()
+        
         # Show
         self.show()
 
@@ -81,8 +79,9 @@ class Viewer(QtWidgets.QMainWindow):
         """Load the joblib file which contains the dictionary of 
         predictions
         """
-        dir_path    = os.path.dirname(os.path.realpath(__file__))
-        #dir_path     = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/' # For development purposes only
+
+        dir_path     = os.path.dirname(os.path.realpath(__file__))
+        #dir_path    = '/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/' # For development purposes only
         message      = 'Select pkl file' 
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
@@ -105,6 +104,8 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Define the grid of widgets
         gridLayout = QtWidgets.QGridLayout()      
+        #gridLayout.setSpacing(0)
+        gridLayout.setOriginCorner(QtCore.Qt.TopLeftCorner)
         
         # Set QWidget object as main window in order to develop the 
         # appropriate functions
@@ -112,53 +113,50 @@ class Viewer(QtWidgets.QMainWindow):
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
 
+        # Set the text font 
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        
+        
         # Set the line figure widget 
-        lineFigure = QtGui.QImage()
-        lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
-        displayLineFigure = QtWidgets.QLabel('Line Figure')
-        displayLineFigure.setPixmap(QtGui.QPixmap.fromImage(lineFigure))
-        displayLineFigure.adjustSize()
-        #displayLineFigure.setText('Line Figure')
+        self.lineFigure = QtGui.QImage()
+        # The loading should be handled by another method obviously
+        self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
+
+        self.lineFigureScene   = QtWidgets.QGraphicsScene()
+        self.displayLineFigure = QtWidgets.QGraphicsView(self.lineFigureScene)
+        self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))  
+
+        # Set the text item to plot the label of the figure
+        self.lineTextItem = QtWidgets.QGraphicsTextItem()
+        self.lineTextItem.setFont(font)
+        self.lineTextItem.setPlainText('Line Figure')
+        self.lineTextItem.setPos(self.lineFigure.height()/2, -100)
+
+        self.lineFigureScene.addItem(self.lineTextItem)
 
         # Set the bar figure widget
-        barFigure = QtGui.QImage()
-        barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
-        displayBarFigure = QtWidgets.QLabel('Bar Figure')
-        displayBarFigure.setPixmap(QtGui.QPixmap.fromImage(lineFigure))
-        displayBarFigure.adjustSize()
+        self.barFigure = QtGui.QImage()
+        self.barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
         
-        displayLineText = QtWidgets.QLabel('Line figure')
-        # Add widget to grid layout        
-        gridLayout.addWidget(displayLineText, 0, 0, QtCore.Qt.AlignLeft)
-        gridLayout.addWidget(displayLineFigure, 1, 0, QtCore.Qt.AlignLeft)
-        gridLayout.addWidget(displayBarFigure, 2, 0, QtCore.Qt.AlignLeft)
+        self.barFigureScene   = QtWidgets.QGraphicsScene()
+        self.displayBarFigure = QtWidgets.QGraphicsView(self.barFigureScene)
+        self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))  
+        self.barFigureScene.setSceneRect(0,0,256,256)
+        #self.displayBarFigure.setSceneRect(0,0,256,256)
+        #self.barFigureScene.addText('Bar figure', font)
 
-        
-    def featureExtraction(self):
-        """Contains feature extraction techniques selected by the user 
-        to use them along with a clustering method
-        """
+        # Set the text item to plot the label of the figure
+        self.barTextItem = QtWidgets.QGraphicsTextItem()
+        self.barTextItem.setFont(font)
+        self.barTextItem.setPlainText('Bar Figure')
+        self.barTextItem.setPos(self.barFigure.height()/2, -100)
 
-        counter = 0 
-        for file in self.figures:
-            if counter == 10: break
-            image = imread(file)
-            feats = hog(image, orientations=8, pixels_per_cell=(16, 16),
-                    cells_per_block=(1, 1), visualize=False) 
-            break
-            counter += 1
-            if self.features.size == 0:
-                self.features = feats.flatten()
-            else:
-                self.features.concatenate(feats.flatten(), axis=0)
-
-    '''
-    def clustering(self):
-        """Contains the clustering algorithms for usage (e.g K-means)
-        TODO: Probably will be removed
-        """
-        kmeans = KMeans(n_clusters=2, random_state=0).fit(self.features)
-    '''
+        self.barFigureScene.addItem(self.barTextItem)
+        # Add widgets to grid layout        
+        gridLayout.addWidget(self.displayLineFigure, 1, 0, QtCore.Qt.AlignLeft)
+        gridLayout.addWidget(self.displayBarFigure, 2, 0, QtCore.Qt.AlignLeft)
 
     def savePkl(self):
         """Save using joblib package
@@ -180,8 +178,19 @@ class Viewer(QtWidgets.QMainWindow):
         """
         QtWidgets.QMessageBox.about(self, "This is the help message box")
         self.update()
-    
-    '''
+
+    def paintEvent(self, event):
+        """Draw Contour
+        """
+        """
+        qp_1 = QtGui.QPainter()
+        qp_1.begin(self.displayLineFigure)
+        qp_1.setPen(QtCore.Qt.blue)
+        qp_1.setFont(QtGui.QFont('Arial', 30))
+        qp_1.drawText(self.displayLineFigure.rect(), QtCore.Qt.AlignCenter, 'Line Figure')
+        qp_1.end()
+        """
+    ''' 
     def toQImage(self, im, copy=False):
         """Transforms a numpy array image to QImage
         """
