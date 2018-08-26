@@ -92,7 +92,7 @@ class Viewer(QtWidgets.QMainWindow):
         # Check
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
-            if self.joblibExt in str(fileName): # if it is a pkl file handle it properly
+            if self.joblibExt in str(fileName): # if its a pkl file handle it properly
                 self.feats = joblib.load(str(fileName))
             else:
                 message = 'Only pkl files'
@@ -104,7 +104,6 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Define the grid of widgets
         gridLayout = QtWidgets.QGridLayout()      
-        #gridLayout.setSpacing(0)
         gridLayout.setOriginCorner(QtCore.Qt.TopLeftCorner)
         
         # Set QWidget object as main window in order to develop the 
@@ -112,6 +111,7 @@ class Viewer(QtWidgets.QMainWindow):
         widget = QtWidgets.QWidget(self)
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
+        
 
         # Set the text font 
         font = QtGui.QFont()
@@ -122,41 +122,56 @@ class Viewer(QtWidgets.QMainWindow):
         # Set the line figure widget 
         self.lineFigure = QtGui.QImage()
         # The loading should be handled by another method obviously
-        self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
-
-        self.lineFigureScene   = QtWidgets.QGraphicsScene()
+        self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC1949492/pone.0000796.g002.jpg')
+        #self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC3792043/pone.0077405.g005.jpg')
+        self.lineFigureScene   = GraphicsLineScene()
+        
+        #self.lineFigureScene   = QtWidgets.QGraphicsScene()
         self.displayLineFigure = QtWidgets.QGraphicsView(self.lineFigureScene)
         self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))  
+        self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
 
         # Set the text item to plot the label of the figure
         self.lineTextItem = QtWidgets.QGraphicsTextItem()
         self.lineTextItem.setFont(font)
         self.lineTextItem.setPlainText('Line Figure')
-        self.lineTextItem.setPos(self.lineFigure.height()/2, -100)
-
-        self.lineFigureScene.addItem(self.lineTextItem)
+        self.lineTextItem.setPos(self.lineFigure.width()/2, -100)
 
         # Set the bar figure widget
         self.barFigure = QtGui.QImage()
-        self.barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC2585806/pone.0003847.g002.jpg')
-        
-        self.barFigureScene   = QtWidgets.QGraphicsScene()
+        self.barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC3792043/pone.0077405.g005.jpg')        
+        #self.barFigureScene   = QtWidgets.QGraphicsScene()
+        self.barFigureScene = GraphicsBarScene()
         self.displayBarFigure = QtWidgets.QGraphicsView(self.barFigureScene)
         self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))  
-        self.barFigureScene.setSceneRect(0,0,256,256)
-        #self.displayBarFigure.setSceneRect(0,0,256,256)
-        #self.barFigureScene.addText('Bar figure', font)
+        self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
 
         # Set the text item to plot the label of the figure
         self.barTextItem = QtWidgets.QGraphicsTextItem()
         self.barTextItem.setFont(font)
         self.barTextItem.setPlainText('Bar Figure')
-        self.barTextItem.setPos(self.barFigure.height()/2, -100)
+        self.barTextItem.setPos(self.barFigure.width()/2, -100)
 
+        # Add items to scene
+        self.lineFigureScene.addItem(self.lineTextItem)
         self.barFigureScene.addItem(self.barTextItem)
-        # Add widgets to grid layout        
+        
+        self.lineFigures = LineFigures()
+        self.barFigures  = BarFigures()
+        self.displayLineFigures = QtWidgets.QGraphicsView(self.lineFigures)
+        self.displayBarFigures = QtWidgets.QGraphicsView(self.barFigures)
+
+        self.lineFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
+        self.barFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
+        
+        # Add widgets to grid layout
         gridLayout.addWidget(self.displayLineFigure, 1, 0, QtCore.Qt.AlignLeft)
         gridLayout.addWidget(self.displayBarFigure, 2, 0, QtCore.Qt.AlignLeft)
+        gridLayout.addWidget(self.displayLineFigures, 1, 1, QtCore.Qt.AlignRight)
+        gridLayout.addWidget(self.displayBarFigures, 2, 1, QtCore.Qt.AlignRight)
+
+        gridLayout.setHorizontalSpacing(100)
+        gridLayout.setVerticalSpacing(50)        
 
     def savePkl(self):
         """Save using joblib package
@@ -179,47 +194,97 @@ class Viewer(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.about(self, "This is the help message box")
         self.update()
 
-    def paintEvent(self, event):
-        """Draw Contour
-        """
-        """
-        qp_1 = QtGui.QPainter()
-        qp_1.begin(self.displayLineFigure)
-        qp_1.setPen(QtCore.Qt.blue)
-        qp_1.setFont(QtGui.QFont('Arial', 30))
-        qp_1.drawText(self.displayLineFigure.rect(), QtCore.Qt.AlignCenter, 'Line Figure')
-        qp_1.end()
-        """
-    ''' 
-    def toQImage(self, im, copy=False):
-        """Transforms a numpy array image to QImage
-        """
-        if im is None:
-            return QtGui.QImage()
-        
-        if im.dtype == np.uint8:
-            if len(im.shape) == 2:
-                gray_color_table = [qRgb(i, i, i) for i in range(256)]
-                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_Indexed8)
-                qim.setColorTable(gray_color_table)
-                return qim.copy() if copy else qim
-
-            elif len(im.shape) == 3:
-                if im.shape[2] == 3:
-                    qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888)
-                    return qim.copy() if copy else qim
-                elif im.shape[2] == 4:
-                    qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_ARGB32)
-                    return qim.copy() if copy else qim
-        
-        # Show Error message
-        message = 'Inconsistent data type {}'.format(im.dtype)
-        self.messageBox(message)
-    '''
-
     # Destructor
     def __del__(self):
         return
+
+class GraphicsLineScene(QtWidgets.QGraphicsScene):
+    """class which holds the qgraphics scene widget about line graphs along with 
+    its own methods
+    """
+    def __init__(self, parent=None):
+        super(GraphicsLineScene, self).__init__(parent)
+        
+    def contextMenuEvent(self, event):
+        if event.reason() == event.Mouse:
+            event.accept()
+            menu       = QtWidgets.QMenu()
+            okAction   = QtWidgets.QAction('Ok', self)
+            barAction  = QtWidgets.QAction('Bar Chart', self)
+            lineAction = QtWidgets.QAction('Line Chart', self)            
+            voidAction = QtWidgets.QAction('Unlabeled Chart', self)
+
+            okAction.triggered.connect(self.okAction)
+            barAction.triggered.connect(self.barAction)
+            voidAction.triggered.connect(self.voidAction)
+            lineAction.setEnabled(False)
+
+            menu.addAction(okAction)
+            menu.addAction(barAction)
+            menu.addAction(voidAction)
+            menu.addAction(lineAction)
+            menu.exec_(event.screenPos())
+
+    def okAction(self):
+        pass
+
+    def barAction(self):
+        pass
+
+    def voidAction(self):
+        pass
+
+class GraphicsBarScene(QtWidgets.QGraphicsScene):
+    """GraphicsBarScene class
+    """
+    def __init__(self, parent=None):
+        super(GraphicsBarScene, self).__init__(parent)
+    
+    def contextMenuEvent(self, event):
+        if event.reason() == event.Mouse:
+            event.accept()
+            menu = QtWidgets.QMenu()
+            okAction   = QtWidgets.QAction('Ok', self)
+            barAction  = QtWidgets.QAction('Bar Chart', self)
+            lineAction = QtWidgets.QAction('Line Chart', self)            
+            voidAction = QtWidgets.QAction('Unlabeled Chart', self)
+
+            okAction.triggered.connect(self.okAction)
+            lineAction.triggered.connect(self.lineAction)
+            voidAction.triggered.connect(self.voidAction)
+            barAction.setEnabled(False)
+
+            menu.addAction(okAction)
+            menu.addAction(barAction)
+            menu.addAction(voidAction)
+            menu.addAction(lineAction)
+            menu.exec_(event.screenPos()) 
+
+    def okAction(self):
+        pass
+
+    def lineAction(self):
+        pass   
+
+    def voidAction(self):
+        pass
+
+class LineFigures(QtWidgets.QGraphicsScene):
+    """docstring for LineFigures"""
+    def __init__(self, parent=None):
+       super(LineFigures, self).__init__(parent)
+
+    def addItem(self, figure):
+        pass
+
+                      
+class BarFigures(QtWidgets.QGraphicsScene):
+    """docstring for BarFigures"""
+    def __init__(self, parent=None):
+        super(BarFigures, self).__init__(parent)
+    
+    def addItem(self, figure):
+        pass
 
 if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)

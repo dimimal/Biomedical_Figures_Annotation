@@ -13,6 +13,7 @@ import pandas as pd
 import pickle
 from train_svm import load_image, loadModel
 import cv2 as cv
+from keras.models import Model, Sequential
 from keras.preprocessing import image
 from keras.applications.resnet50 import ResNet50, preprocess_input
 
@@ -27,6 +28,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Path arguments')
     parser.add_argument('-mp', '--model_path', nargs=1)
     parser.add_argument('-tp', '--test_path', nargs=1)
+    parser.add_argument('-l', '--layer', nargs='+')
+
     return parser.parse_args()
 
 def load_svm(path):
@@ -39,7 +42,7 @@ def check_args(args):
         sys.exit(-1)
 
 def load_data(path):
-        data_frame = pd.read_csv(path, header=None)
+    data_frame = pd.read_csv(path, header=None)
     return data_frame[0].tolist(), np.array(data_frame[1].values)
 
 def main(args):
@@ -51,12 +54,25 @@ def main(args):
     svm_model = load_svm(args.model_path[0])   
     figures, labels = load_data(args.test_path[0])
     model = loadModel('vgg')
+    
+    if args.layer:
+        layer = args.layer[0]
+        intermediate_layer_model = Model(inputs=model.input,
+                                 outputs=model.get_layer(layer).output)            
+        intermediate_layer_model.summary()
+
     for image in figures:
         figure = load_image(image)
+        
+        if args.layer:
+            y_pred = intermediate_layer_model.predict(figure)
+        else:    
+            y_pred = model.predict(figure, verbose=1)
+        
         if feats.size == 0:
-            feats = model.predict(figure)
+            feats = y_pred
         else:
-            feats = np.concatenate((feats, model.predict(figure)), axis=0)
+            feats = np.concatenate((feats, y_pred), axis=0)
     
     #feats = np.max(feats, axis=-1)
     feats = np.reshape(feats, (feats.shape[0],-1))

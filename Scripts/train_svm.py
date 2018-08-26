@@ -98,7 +98,7 @@ def parseArguments():
     parser.add_argument('-l', '--layer', nargs='+')
     return parser.parse_args()
 
-def train_svm(feats, labels, C_coef=50.):
+def train_svm(feats, labels, C_coef=12.):
     print(feats.shape)
     svm = SVC(C=C_coef).fit(feats, labels)
     return svm
@@ -114,19 +114,31 @@ def main(args):
     figures = np.array([])
     
     paths, labels = load_data(PATH)
-    model         = loadModel(args.network[0])
+    model = loadModel(args.network[0])
     model.summary()
+
+    if args.layer:
+        layer = args.layer[0]
+        intermediate_layer_model = Model(inputs=model.input,
+                                 outputs=model.get_layer(layer).output)            
+        intermediate_layer_model.summary()
 
     for file in paths:
         print(file)
         figure = load_image(file, show=False)
-        #print(type(figure))
-        y_pred = model.predict(figure, verbose=1)
-        #print(y_pred.shape)
+        
+        # select the proper model object
+        if args.layer:
+            y_pred = intermediate_layer_model.predict(figure)
+        else:    
+            y_pred = model.predict(figure, verbose=1)
+
+        # check dimensions
         if figures.size == 0:
             figures = np.expand_dims(y_pred, axis=0)
         else:
             figures = np.concatenate((figures, np.expand_dims(y_pred, axis=0)), axis=0)
+    
     # Fix this
     print(figures.shape)
     figures = np.reshape(figures, (figures.shape[0], -1))
