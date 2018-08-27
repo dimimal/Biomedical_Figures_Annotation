@@ -156,10 +156,11 @@ class Viewer(QtWidgets.QMainWindow):
         self.lineFigureScene.addItem(self.lineTextItem)
         self.barFigureScene.addItem(self.barTextItem)
         
+        # Initialize the classification scenes 
         self.lineFigures = LineFigures()
         self.barFigures  = BarFigures()
         self.displayLineFigures = QtWidgets.QGraphicsView(self.lineFigures)
-        self.displayBarFigures = QtWidgets.QGraphicsView(self.barFigures)
+        self.displayBarFigures  = QtWidgets.QGraphicsView(self.barFigures)
 
         self.lineFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
         self.barFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
@@ -167,11 +168,26 @@ class Viewer(QtWidgets.QMainWindow):
         # Add widgets to grid layout
         gridLayout.addWidget(self.displayLineFigure, 1, 0, QtCore.Qt.AlignLeft)
         gridLayout.addWidget(self.displayBarFigure, 2, 0, QtCore.Qt.AlignLeft)
-        gridLayout.addWidget(self.displayLineFigures, 1, 1, QtCore.Qt.AlignRight)
-        gridLayout.addWidget(self.displayBarFigures, 2, 1, QtCore.Qt.AlignRight)
+        gridLayout.addWidget(self.displayLineFigures, 1, 1, QtCore.Qt.AlignLeft)
+        gridLayout.addWidget(self.displayBarFigures, 2, 1, QtCore.Qt.AlignLeft)
 
         gridLayout.setHorizontalSpacing(100)
-        gridLayout.setVerticalSpacing(50)        
+        gridLayout.setVerticalSpacing(50)
+
+        tmp_1 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.lineFigure))
+        tmp_2 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.barFigure))
+        #
+        print(self.lineFigures.sceneRect())
+        #tmp_1.setPos()
+        
+        print(tmp_1.pos())
+        print(tmp_2.pos())
+        self.lineFigures.addItem(tmp_1)        
+        self.lineFigures.addItem(tmp_2)
+        tmp_2.setPos(tmp_1.boundingRect().width()+50, 0)
+        
+        #self.displayLineFigures.fitInView(self.lineFigures.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
 
     def savePkl(self):
         """Save using joblib package
@@ -274,8 +290,18 @@ class LineFigures(QtWidgets.QGraphicsScene):
     def __init__(self, parent=None):
        super(LineFigures, self).__init__(parent)
 
-    def addItem(self, figure):
+
+class FigureItem(QtWidgets.QGraphicsItem):
+    """Object which holds the properties and methods for the figures in the classified 
+    section of the widget"""
+
+    def __init__(self, arg):
+        super(FigureItem, self).__init__()
+        #self.scale()
+
+    def scale(self):
         pass
+    
 
                       
 class BarFigures(QtWidgets.QGraphicsScene):
@@ -283,8 +309,6 @@ class BarFigures(QtWidgets.QGraphicsScene):
     def __init__(self, parent=None):
         super(BarFigures, self).__init__(parent)
     
-    def addItem(self, figure):
-        pass
 
 if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)
