@@ -8,6 +8,7 @@ from sklearn.externals import joblib
 
 import random 
 import sys
+import pandas as pd
 #import glob
 import os
 import numpy as np
@@ -28,11 +29,10 @@ class Viewer(QtWidgets.QMainWindow):
         self.image     = QtGui.QImage()
         self.folder    = ''
         self.features  = np.array([])
-        
-        # Feature Extraction selected by the user
-        self.featExtMethod = ''
 
-        self.clusterMethod = ''
+        self.pathIds   = {}
+        self.pathCrr   = {}
+        
         # Lis of paths of the figures
         self.figures       = []
         
@@ -85,18 +85,31 @@ class Viewer(QtWidgets.QMainWindow):
         message      = 'Select pkl file' 
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        folderDialog.setNameFilter('Pkl files (*.pkl)')
+        #folderDialog.setNameFilter('Pkl files (*.pkl)')
+        folderDialog.setNameFilter('CSV files (*.csv)')
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         fileName   = [] # Returns a list of the directory
 
+        
         # Check
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
-            if self.joblibExt in str(fileName): # if its a pkl file handle it properly
-                self.feats = joblib.load(str(fileName))
+            #if self.joblibExt in str(fileName): # if its a pkl file handle it properly
+            #    self.feats = joblib.load(str(fileName))
+            if '.csv' in str(fileName):
+                self.loadCsv(str(fileName[0]))
             else:
                 message = 'Only pkl files'
                 self.messageBox(message)
+        
+    def loadCsv(self, file):
+        data = pd.read_csv(file, header=None, names=['path', 'id', 'corrected'])
+
+        self.pathIds = data.set_index('path').to_dict()['id']
+        self.pathCrr = data.set_index('path').to_dict()['corrected']
+    
+    def selectFigures(self):
+        pass    
 
     def initDocks(self):
         """Initialize the docks inside the Main window
@@ -122,7 +135,8 @@ class Viewer(QtWidgets.QMainWindow):
         # Set the line figure widget 
         self.lineFigure = QtGui.QImage()
         # The loading should be handled by another method obviously
-        self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC1949492/pone.0000796.g002.jpg')
+        self.lineFigure.load('/media/dimitris/TOSHIBA EXT/\
+            Image_Document_Classification/PMC-Dataset/PMC1949492/pone.0000796.g002.jpg')
         #self.lineFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC3792043/pone.0077405.g005.jpg')
         self.lineFigureScene   = GraphicsLineScene()
         
@@ -139,7 +153,8 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Set the bar figure widget
         self.barFigure = QtGui.QImage()
-        self.barFigure.load('/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset/PMC3792043/pone.0077405.g005.jpg')        
+        self.barFigure.load('/media/dimitris/TOSHIBA EXT/\
+            Image_Document_Classification/PMC-Dataset/PMC3792043/pone.0077405.g005.jpg')        
         #self.barFigureScene   = QtWidgets.QGraphicsScene()
         self.barFigureScene = GraphicsBarScene()
         self.displayBarFigure = QtWidgets.QGraphicsView(self.barFigureScene)
@@ -176,15 +191,11 @@ class Viewer(QtWidgets.QMainWindow):
 
         tmp_1 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.lineFigure))
         tmp_2 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.barFigure))
-        #
-        print(self.lineFigures.sceneRect())
-        #tmp_1.setPos()
-        
-        print(tmp_1.pos())
-        print(tmp_2.pos())
+
         self.lineFigures.addItem(tmp_1)        
         self.lineFigures.addItem(tmp_2)
-        tmp_2.setPos(tmp_1.boundingRect().width()+50, 0)
+        tmp_2.setPos(tmp_1.boundingRect().width(), 0)
+        tmp_2.setScale(0.5)
         
         #self.displayLineFigures.fitInView(self.lineFigures.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
@@ -289,6 +300,10 @@ class LineFigures(QtWidgets.QGraphicsScene):
     """docstring for LineFigures"""
     def __init__(self, parent=None):
        super(LineFigures, self).__init__(parent)
+
+    def scale(self, image):
+        fx, fy = image.width()/2., image.height()/2.
+        scaleMatrix = QtGui.QTransform.fromScale(fx,fy)
 
 
 class FigureItem(QtWidgets.QGraphicsItem):
