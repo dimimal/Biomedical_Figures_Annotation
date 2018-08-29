@@ -2,21 +2,21 @@
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5 import QtCore
-#import pyqtgraph  as pg
+
 from sklearn.externals import joblib
-#from sklearn.cluster import KMeans
+
+from Utils.utils import (GraphicsLineScene, 
+                         GraphicsBarScene, 
+                         LineFigures, 
+                         BarFigures, 
+                         FigureItem)
 
 import random 
 import sys
 import pandas as pd
-#import glob
 import os
 import numpy as np
 import re
-
-# skimage for image processing 
-from skimage.feature import hog
-from skimage.io import imread 
 
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
@@ -27,7 +27,6 @@ class Viewer(QtWidgets.QMainWindow):
         self.imageExt  = '.jpg'
         self.joblibExt = '.pkl'
         self.csvExt    = '.csv'
-        self.folder    = ''
 
         self.pathIds   = {}
         self.pathCrr   = {}
@@ -230,18 +229,20 @@ class Viewer(QtWidgets.QMainWindow):
     def getWidgetDims(self, widget):
         return widget.width(), widget.height()
 
+    def createPixItem(self, figure):
+        self.figureItem = FigureItem(figure)
+
     def plotFigures(self, path):
         if self.pathIds[path] == 0:
             self.lineFigurePath = path
             self.lineFigure.load(path)
             self.lineFigure = self.lineFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
-            # TODO:: handle low resolution images ######
+            # TODO:: ### handle low resolution images ######
             self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
             x, y = self.getWidgetPos(self.displayLineFigure)
             w, h = self.getWidgetDims(self.lineFigure) 
             self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
             self.displayLineFigure.fitInView(x,y,w,h, QtCore.Qt.KeepAspectRatio)
-
         elif self.pathIds[path] == 1:
             self.barFigurePath = path
             self.barFigure.load(path)
@@ -291,150 +292,6 @@ class Viewer(QtWidgets.QMainWindow):
     def __del__(self):
         return
 
-class GraphicsLineScene(QtWidgets.QGraphicsScene):
-    """class which holds the qgraphics scene widget about line graphs along with 
-    its own methods
-    """
-    def __init__(self, parent=None):
-        super(GraphicsLineScene, self).__init__(parent)
-        
-    def contextMenuEvent(self, event):
-        if event.reason() == event.Mouse and view.lineFigurePath is not None:
-            event.accept()
-            menu       = QtWidgets.QMenu()
-            okAction   = QtWidgets.QAction('Ok', self)
-            barAction  = QtWidgets.QAction('Bar Chart', self)
-            lineAction = QtWidgets.QAction('Line Chart', self)            
-            voidAction = QtWidgets.QAction('Unlabeled Chart', self)
-
-            okAction.triggered.connect(self.okAction)
-            barAction.triggered.connect(self.barAction)
-            voidAction.triggered.connect(self.voidAction)
-            lineAction.triggered.connect(self.lineAction)
-            
-            lineAction.setEnabled(False)
-            
-            if view.pathIds[view.lineFigurePath] == 2:
-                lineAction.setEnabled(True)
-
-            menu.addAction(okAction)
-            menu.addAction(barAction)
-            menu.addAction(voidAction)
-            menu.addAction(lineAction)
-            menu.exec_(event.screenPos())
-
-    def okAction(self):
-        view.pathCrr[view.lineFigurePath] = 1
-        view.lineFigurePath = None
-        view.lineFigureScene.clear()
-        view.nextLineFigure()
-
-    def lineAction(self):
-        view.pathCrr[view.lineFigurePath] = 1
-        view.pathIds[view.lineFigurePath] = 0
-        view.lineFigurePath = None
-        view.lineFigureScene.clear()
-        view.nextLineFigure()
-
-    def barAction(self):
-        view.pathCrr[view.lineFigurePath] = 1
-        view.pathIds[view.lineFigurePath] = 1
-        view.lineFigurePath = None
-        view.lineFigureScene.clear()
-        view.nextLineFigure()
-
-    def voidAction(self):
-        view.pathCrr[view.lineFigurePath] = 1
-        view.pathIds[view.lineFigurePath] = 2
-        view.lineFigurePath = None
-        view.lineFigureScene.clear()
-        view.nextLineFigure()
-
-
-class GraphicsBarScene(QtWidgets.QGraphicsScene):
-    """GraphicsBarScene class
-    """
-    def __init__(self, parent=None):
-        super(GraphicsBarScene, self).__init__(parent)
-    
-    def contextMenuEvent(self, event):
-        if event.reason() == event.Mouse and view.barFigurePath is not None:
-            event.accept()
-            menu = QtWidgets.QMenu()
-            okAction   = QtWidgets.QAction('Ok', self)
-            barAction  = QtWidgets.QAction('Bar Chart', self)
-            lineAction = QtWidgets.QAction('Line Chart', self)            
-            voidAction = QtWidgets.QAction('Unlabeled Chart', self)
-
-            okAction.triggered.connect(self.okAction)
-            lineAction.triggered.connect(self.lineAction)
-            voidAction.triggered.connect(self.voidAction)
-            barAction.triggered.connect(self.barAction)
-            
-            barAction.setEnabled(False)
-
-            # if the figure is unlabeled, enable the line action
-            if view.pathIds[view.barFigurePath] == 2:
-                barAction.setEnabled(True)
-
-            menu.addAction(okAction)
-            menu.addAction(barAction)
-            menu.addAction(voidAction)
-            menu.addAction(lineAction)
-            menu.exec_(event.screenPos()) 
-
-    def okAction(self):
-        view.pathCrr[view.barFigurePath] = 1
-        view.barFigurePath = None
-        view.barFigureScene.clear()
-        view.nextBarFigure()
-
-    def lineAction(self):
-        view.pathCrr[view.barFigurePath] = 1
-        view.pathIds[view.barFigurePath] = 0
-        view.barFigurePath = None
-        view.barFigureScene.clear()
-        view.nextBarFigure()
-
-    def barAction(self):
-        view.pathCrr[view.barFigurePath] = 1
-        view.pathIds[view.barFigurePath] = 1
-        view.barFigurePath = None
-        view.barFigureScene.clear()
-        view.nextBarFigure()   
-
-    def voidAction(self):
-        view.pathCrr[view.barFigurePath] = 1
-        view.pathIds[view.barFigurePath] = 2
-        view.barFigurePath = None
-        view.barFigureScene.clear()
-        view.nextBarFigure()
-
-
-class LineFigures(QtWidgets.QGraphicsScene):
-    """docstring for LineFigures"""
-    def __init__(self, parent=None):
-       super(LineFigures, self).__init__(parent)
-
-    def scale(self, image):
-        fx, fy = image.width()/2., image.height()/2.
-        scaleMatrix = QtGui.QTransform.fromScale(fx, fy)
-
-
-class BarFigures(QtWidgets.QGraphicsScene):
-    """docstring for BarFigures"""
-    def __init__(self, parent=None):
-        super(BarFigures, self).__init__(parent)
-
-class FigureItem(QtWidgets.QGraphicsPixmapItem):
-    """Object which holds the properties and methods for the figures in the classified 
-    section of the widget"""
-
-    def __init__(self, parent=None):
-        super(FigureItem, self).__init__(parent)
-
-    def scale(self):
-        pass
                          
 if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)
