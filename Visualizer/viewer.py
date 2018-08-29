@@ -231,6 +231,7 @@ class Viewer(QtWidgets.QMainWindow):
 
     def createPixItem(self, figure):
         self.figureItem = FigureItem(figure)
+        self.lineFigures.addPixmap(self.figureItem.figure) # Wtf??
 
     def plotFigures(self, path):
         if self.pathIds[path] == 0:
