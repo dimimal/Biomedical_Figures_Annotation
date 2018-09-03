@@ -14,8 +14,7 @@ from sklearn.externals import joblib
 from Utils.utils import (GraphicsLineScene, 
                          GraphicsBarScene, 
                          LineFigures, 
-                         BarFigures, 
-                         FigureItem)
+                         BarFigures)
 
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
@@ -216,10 +215,6 @@ class Viewer(QtWidgets.QMainWindow):
 
     def getWidgetDims(self, widget):
         return widget.width(), widget.height()
-
-    def createPixItem(self, figure):
-        self.figureItem = FigureItem(figure)
-        self.lineFigures.addPixmap(self.figureItem.figure) # Wtf??
 
     def plotFigures(self, path):
         """Method which plots the figures in the scenes

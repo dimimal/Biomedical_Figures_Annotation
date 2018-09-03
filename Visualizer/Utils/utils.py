@@ -113,7 +113,9 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 1
-        self.view.barFigures.createItem(self.view.barFigurePath)
+        fig = self.view.barFigures.createItem(self.view.barFigurePath)
+        # Test the object
+        self.view.barFigures.addItem(fig)
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()   
@@ -150,18 +152,48 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figuresList = []
 
     def createItem(self, figurePath):
-        figure = FigureItem(figurePath, self)
-        self.figuresList.append(figure)
-        self.update()
+        self.figureItem = QtWidgets.QGraphicsPixmapItem()
+        self.figure = QtGui.QPixmap(figurePath)
+        self.scale()
+        self.paint()
+        self.figureItem.setPixmap(self.figure)
+        self.figuresList.append(self.figureItem)
+        #return figure
+        if len(self.figuresList) == 1:
+            # set geometry
+        
+        return self.figureItem
 
+    def scale(self):
+        self.figure = self.figure.scaled(250, 250, 
+                            QtCore.Qt.IgnoreAspectRatio, 
+                            QtCore.Qt.SmoothTransformation) 
+
+    def paint(self):
+        # Add bounding rectangle here
+        picture = QtGui.QPixmap(253,253)
+        paint   = QtGui.QPainter(picture)
+        paint.setPen(QtGui.QColor(255,34,255))
+        paint.drawRect(0,0,253, 253)
+        paint.drawPixmap(3,3, self.figure)
+        #self.figure = picture #LOLLL
+        paint.end()
+
+    def deleteItem(self):
+        pass
+
+"""
+Obsolete, use methods inside scenes!
 class FigureItem(QtWidgets.QGraphicsPixmapItem):
-    """Object which holds the properties and methods for each figure in the widget  
+    '''Object which holds the properties and methods for each figure in the widget  
     which shows the corrected figures which classified by hand.
-    """
+    '''
 
     def __init__(self, figurePath, parent=None):
+        print(figurePath, parent)
         super(FigureItem, self).__init__(figurePath, parent)
-        self.figure = QtGui.QPixmap().load(figurePath)
+        self.path   = figurePath
+        self.figure = QtGui.QPixmap().load(self.path)
         self.scale()
         self.paint()
 
@@ -177,6 +209,7 @@ class FigureItem(QtWidgets.QGraphicsPixmapItem):
         paint.drawRect(0,0,253, 253)
         paint.drawPixmap(3,3, self.figure)
         self.figure = picture #LOLLL
+"""
 
 if __name__ == '__main__':
     raise Exception('This module is not executable')
