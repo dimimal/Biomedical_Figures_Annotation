@@ -131,7 +131,6 @@ class Viewer(QtWidgets.QMainWindow):
         # Add widgets to grid layout
         gridLayout.addWidget(lineText, 1, 0, 1, -1, QtCore.Qt.AlignHCenter)
         gridLayout.addWidget(barText, 3, 0, 1, -1, QtCore.Qt.AlignHCenter)
-        #
         gridLayout.addWidget(self.displayLineFigure, 2, 0, QtCore.Qt.AlignLeft)
         gridLayout.addWidget(self.displayBarFigure, 4, 0, QtCore.Qt.AlignLeft)
         gridLayout.addWidget(self.displayLineFigures, 2, 1, 1, -1, QtCore.Qt.AlignLeft)
@@ -141,7 +140,7 @@ class Viewer(QtWidgets.QMainWindow):
         gridLayout.setVerticalSpacing(15)
 
         # Usefull to arrange the size of each widget
-        print(QtWidgets.QDesktopWidget().screenGeometry())
+        #print(QtWidgets.QDesktopWidget().screenGeometry())
 
     def loadPredictions(self):
         """Load the joblib file which contains the dictionary of 
@@ -194,8 +193,9 @@ class Viewer(QtWidgets.QMainWindow):
                 break
 
     def selectFigures(self):
-        # Go through figures that they have not been
-        # classified manually 
+        """Go through figures that they have not been
+        classified manually
+        """ 
         for path, cid in self.pathCrr.items():
             if cid == 0 and self.pathIds[path] == 0:
                 self.plotFigures(path)

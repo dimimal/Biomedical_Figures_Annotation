@@ -113,6 +113,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 1
+        self.view.barFigures.createItem(self.view.barFigurePath)
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()   
@@ -136,16 +137,22 @@ class LineFigures(QtWidgets.QGraphicsScene):
         fx, fy = image.width()/2., image.height()/2.
         scaleMatrix = QtGui.QTransform.fromScale(fx, fy)
 
+    def create(self):
+        pass
+
 
 class BarFigures(QtWidgets.QGraphicsScene):
-    """docstring for BarFigures"""
+    """docstring for BarFigures
+    """
     def __init__(self, parent=None):
         super(BarFigures, self).__init__(parent)
         self.view        = parent
         self.figuresList = []
 
-    def createItem(self):
-        FigureItem(figurePath)
+    def createItem(self, figurePath):
+        figure = FigureItem(figurePath, self)
+        self.figuresList.append(figure)
+        self.update()
 
 class FigureItem(QtWidgets.QGraphicsPixmapItem):
     """Object which holds the properties and methods for each figure in the widget  
