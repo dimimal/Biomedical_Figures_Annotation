@@ -3,27 +3,26 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5 import QtCore
 
-from sklearn.externals import joblib
+import sys
+import random 
+import pandas as pd
+import os
+import numpy as np
+import re
 
+from sklearn.externals import joblib
 from Utils.utils import (GraphicsLineScene, 
                          GraphicsBarScene, 
                          LineFigures, 
                          BarFigures, 
                          FigureItem)
 
-import random 
-import sys
-import pandas as pd
-import os
-import numpy as np
-import re
-
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
     """
     def __init__(self):
         super(Viewer, self).__init__()
-        # Image extension
+        # File Extensions
         self.imageExt  = '.jpg'
         self.joblibExt = '.pkl'
         self.csvExt    = '.csv'
@@ -101,8 +100,8 @@ class Viewer(QtWidgets.QMainWindow):
         font.setBold(True)        
         
         # Add figure widget scenes
-        self.lineFigureScene = GraphicsLineScene()
-        self.barFigureScene  = GraphicsBarScene()
+        self.lineFigureScene = GraphicsLineScene(self)
+        self.barFigureScene  = GraphicsBarScene(self)
 
         # Init view windows
         self.displayLineFigure = QtWidgets.QGraphicsView()
@@ -112,8 +111,8 @@ class Viewer(QtWidgets.QMainWindow):
         self.displayBarFigure.setScene(self.barFigureScene)
 
         # Initialize the classification scenes 
-        self.lineFigures = LineFigures()
-        self.barFigures  = BarFigures()
+        self.lineFigures = LineFigures(self)
+        self.barFigures  = BarFigures(self)
         self.displayLineFigures = QtWidgets.QGraphicsView(self.lineFigures)
         self.displayBarFigures  = QtWidgets.QGraphicsView(self.barFigures)
 
@@ -143,17 +142,6 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Usefull to arrange the size of each widget
         print(QtWidgets.QDesktopWidget().screenGeometry())
-
-        """
-        tmp_1 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.lineFigure))
-        tmp_2 = QtWidgets.QGraphicsPixmapItem(QtGui.QPixmap.fromImage(self.barFigure))
-
-        self.lineFigures.addItem(tmp_1)        
-        self.lineFigures.addItem(tmp_2)
-        tmp_2.setPos(tmp_1.boundingRect().width(), 0)
-        tmp_2.setScale(0.5)
-        """
-        #self.displayLineFigures.fitInView(self.lineFigures.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
     def loadPredictions(self):
         """Load the joblib file which contains the dictionary of 
@@ -234,6 +222,8 @@ class Viewer(QtWidgets.QMainWindow):
         self.lineFigures.addPixmap(self.figureItem.figure) # Wtf??
 
     def plotFigures(self, path):
+        """Method which plots the figures in the scenes
+        """
         if self.pathIds[path] == 0:
             self.lineFigurePath = path
             self.lineFigure.load(path)
