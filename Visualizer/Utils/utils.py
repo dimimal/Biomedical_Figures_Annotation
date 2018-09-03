@@ -160,6 +160,9 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figuresList.append(self.figureItem)
         #return figure
         if len(self.figuresList) == 1:
+            w, h = self.view.getWidgetDims(self.figure)
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(0,0,w,h))
+            self.view.displayBarFigures.fitInView(0, 0, w, h, QtCore.Qt.IgnoreAspectRatio)
             # set geometry
         
         return self.figureItem
