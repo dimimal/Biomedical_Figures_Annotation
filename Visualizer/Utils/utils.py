@@ -114,9 +114,6 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 1
         self.view.barFigures.createItem(self.view.barFigurePath)
-        # Test the object
-        #self.view.barFigures.addItem(fig)
-        #self.view.barFigures.update()
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()   
@@ -171,10 +168,16 @@ class BarFigures(QtWidgets.QGraphicsScene):
             offset = len(self.figuresList)
             self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
             #self.view.displayBarFigures.fitInView(self.view.barFigures.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+            self.seperator(x,y,w,h)
             self.view.barFigures.addItem(self.figureItem)
             self.figureItem.setPos((offset-1)*w,0)
+        #print(self.figuresList)
 
-        return self.figureItem
+    def seperator(self, x, y, w, h):
+            offset = len(self.figuresList)
+            line = QtWidgets.QGraphicsLineItem(x+w,y,x+w,y+h)
+            self.view.barFigures.addItem(line)
+            self.figureItem.setPos((offset-1)*w,0)    
 
     def scale(self):
         self.figure = self.figure.scaled(250, 250, 

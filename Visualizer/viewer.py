@@ -54,7 +54,7 @@ class Viewer(QtWidgets.QMainWindow):
         #
         loadAction.triggered.connect( self.loadPredictions )
         self.toolbar.addAction(loadAction)
-        loadAction.setToolTip('Open file')
+        loadAction.setToolTip('Open File')
 
         # Close the application
         exitAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'exit.png' )), '&Tools', self)
@@ -62,6 +62,12 @@ class Viewer(QtWidgets.QMainWindow):
         exitAction.triggered.connect( self.close )
         self.toolbar.addAction(exitAction)
         exitAction.setToolTip('Exit')           
+
+        saveAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'save.png' )), '&Tools', self)
+        saveAction.triggered.connect(self.saveData)
+        saveAction.setToolTip('Save File')
+        saveAction.setShortcuts(['Ctrl+S'])
+        self.toolbar.addAction(saveAction)
 
         # Init docked widgets
         self.initDocks()
@@ -94,7 +100,7 @@ class Viewer(QtWidgets.QMainWindow):
         gridLayout.setRowMinimumHeight(2, 200)
         gridLayout.setRowMinimumHeight(4, 200)
         '''
-        
+
         # Set the text font 
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -170,9 +176,9 @@ class Viewer(QtWidgets.QMainWindow):
         self.selectFigures()
         
     def loadCsv(self, file):
-        data = pd.read_csv(file, header=None, names=['path', 'id', 'corrected'])
+        data = pd.read_csv(file, header=None, names=['path', 'id', 'cid'])
         self.pathIds = data.set_index('path').to_dict()['id']
-        self.pathCrr = data.set_index('path').to_dict()['corrected']
+        self.pathCrr = data.set_index('path').to_dict()['cid']
     
     def nextLineFigure(self):
         for path, cid in self.pathCrr.items():
@@ -259,6 +265,32 @@ class Viewer(QtWidgets.QMainWindow):
                 w, h = self.getWidgetDims(self.lineFigure)
                 self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))  
                 self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+
+    def saveData(self):
+        """Saves the data into csv after correction 
+        """
+        pdIds = pd.DataFrame.from_dict(self.pathIds, orient='index')
+        pdCrr = pd.DataFrame.from_dict(self.pathCrr, orient='index', columns=['cid'])
+        #print(pdCrr.iloc[:])
+        #print(pdCrr['cid'])
+        mergedData = pd.concat([pdIds, pdCrr['cid']], axis=1, ignore_index=False)
+        #print(mergedData.iloc[0,0])
+        #print(mergedData.iloc[0,1])
+        print(mergedData.shape)
+
+        # Create the save dialog box
+        name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File',
+        '', 'All Files (*)', 'Csv file (*.csv)')
+
+        if not name:
+            return
+        # Check the extension when saving
+        if self.csvExt in name:
+            mergedData.to_csv(name, header=False, index=True)
+        else:
+            message = 'Error saving file {name}.'
+            self.messageBox(message)
+
 
     def messageBox(self, message):
         msg = QtWidgets.QMessageBox()
