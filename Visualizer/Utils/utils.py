@@ -113,9 +113,10 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 1
-        fig = self.view.barFigures.createItem(self.view.barFigurePath)
+        self.view.barFigures.createItem(self.view.barFigurePath)
         # Test the object
-        self.view.barFigures.addItem(fig)
+        #self.view.barFigures.addItem(fig)
+        #self.view.barFigures.update()
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()   
@@ -155,33 +156,42 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
         self.figure = QtGui.QPixmap(figurePath)
         self.scale()
-        self.paint()
+        #self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
-        #return figure
+               
+        x, y = self.view.getWidgetPos(self.view.displayBarFigures)
+        w, h = self.view.getWidgetDims(self.figure)
         if len(self.figuresList) == 1:
-            w, h = self.view.getWidgetDims(self.figure)
-            self.view.displayBarFigures.setGeometry(QtCore.QRect(0,0,w,h))
-            self.view.displayBarFigures.fitInView(0, 0, w, h, QtCore.Qt.IgnoreAspectRatio)
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,w,h))
+            self.view.displayBarFigures.fitInView(self.view.barFigures.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
             # set geometry
-        
+            self.view.barFigures.addItem(self.figureItem)
+        else:
+            offset = len(self.figuresList)
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
+            #self.view.displayBarFigures.fitInView(self.view.barFigures.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+            self.view.barFigures.addItem(self.figureItem)
+            self.figureItem.setPos((offset-1)*w,0)
+
         return self.figureItem
 
     def scale(self):
         self.figure = self.figure.scaled(250, 250, 
                             QtCore.Qt.IgnoreAspectRatio, 
                             QtCore.Qt.SmoothTransformation) 
-
+    '''
     def paint(self):
         # Add bounding rectangle here
         picture = QtGui.QPixmap(253,253)
         paint   = QtGui.QPainter(picture)
+        #paint.begin()
         paint.setPen(QtGui.QColor(255,34,255))
         paint.drawRect(0,0,253, 253)
         paint.drawPixmap(3,3, self.figure)
-        #self.figure = picture #LOLLL
+        #self.figure = picture #LOLLL       
         paint.end()
-
+    '''
     def deleteItem(self):
         pass
 

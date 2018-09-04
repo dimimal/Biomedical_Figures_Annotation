@@ -89,10 +89,12 @@ class Viewer(QtWidgets.QMainWindow):
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
         
+        '''Obsolete stuff(playing around)
         gridLayout.setColumnMinimumWidth(1, 200) 
         gridLayout.setRowMinimumHeight(2, 200)
         gridLayout.setRowMinimumHeight(4, 200)
-
+        '''
+        
         # Set the text font 
         font = QtGui.QFont()
         font.setPointSize(14)
