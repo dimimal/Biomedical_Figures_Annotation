@@ -166,26 +166,30 @@ class BarFigures(QtWidgets.QGraphicsScene):
             self.view.barFigures.addItem(self.figureItem)
         else:
             offset = len(self.figuresList)
-            self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
-            #self.view.displayBarFigures.fitInView(self.view.barFigures.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
-            self.seperator(x,y,w,h)
+            self.arrangeScene(x, y, w, h, offset)
             self.view.barFigures.addItem(self.figureItem)
             self.figureItem.setPos((offset-1)*w,0)
-        #print(self.figuresList)
+    
+    def arrangeScene(self, x, y, w, h, offset):
+        if x+offset*w > self.view.screenWidth:
+            self.view.displayBarFigures.translate(w,0)
+        else:
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
 
     def seperator(self, x, y, w, h):
+            # Line seperator among pixmap items
             offset = len(self.figuresList)
             line = QtWidgets.QGraphicsLineItem(x+w,y,x+w,y+h)
             self.view.barFigures.addItem(line)
             self.figureItem.setPos((offset-1)*w,0)    
 
     def scale(self):
-        self.figure = self.figure.scaled(250, 250, 
+        self.figure = self.figure.scaled(250, 400, 
                             QtCore.Qt.IgnoreAspectRatio, 
                             QtCore.Qt.SmoothTransformation) 
     '''
     def paint(self):
-        # Add bounding rectangle here
+        # Add bounding frame here
         picture = QtGui.QPixmap(253,253)
         paint   = QtGui.QPainter(picture)
         #paint.begin()

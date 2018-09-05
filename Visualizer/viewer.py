@@ -69,6 +69,12 @@ class Viewer(QtWidgets.QMainWindow):
         saveAction.setShortcuts(['Ctrl+S'])
         self.toolbar.addAction(saveAction)
 
+        trainAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'learning.png' )), '&Tools', self)
+        trainAction.triggered.connect(self.trainModel)
+        trainAction.setToolTip('Train Model')
+        trainAction.setShortcuts(['Ctrl+L'])
+        self.toolbar.addAction(trainAction)
+
         # Init docked widgets
         self.initDocks()
 
@@ -147,7 +153,13 @@ class Viewer(QtWidgets.QMainWindow):
         gridLayout.setVerticalSpacing(15)
 
         # Usefull to arrange the size of each widget
-        #print(QtWidgets.QDesktopWidget().screenGeometry())
+        QtWidgets.QDesktopWidget().screenGeometry()
+        self.screenWidth  = QtWidgets.QDesktopWidget().width()
+        self.screenHeight = QtWidgets.QDesktopWidget().height()
+
+        print(self.displayBarFigures.pos())
+        print(self.displayBarFigures.mapToGlobal(self.displayBarFigures.pos()))
+        #print(self.displayBarFigures.mapFrom(self, self.displayBarFigures.pos()))
 
     def loadPredictions(self):
         """Load the joblib file which contains the dictionary of 
@@ -158,7 +170,6 @@ class Viewer(QtWidgets.QMainWindow):
         message      = 'Select csv file' 
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        #folderDialog.setNameFilter('Pkl files (*.pkl)')
         folderDialog.setNameFilter('CSV files (*.csv)')
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         fileName   = [] # Returns a list of the directory
@@ -286,6 +297,8 @@ class Viewer(QtWidgets.QMainWindow):
             message = 'Error saving file {}.'.format(name)
             self.messageBox(message)
 
+    def trainModel(self):
+        pass
 
     def messageBox(self, message):
         msg = QtWidgets.QMessageBox()
