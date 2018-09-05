@@ -271,16 +271,11 @@ class Viewer(QtWidgets.QMainWindow):
         """
         pdIds = pd.DataFrame.from_dict(self.pathIds, orient='index')
         pdCrr = pd.DataFrame.from_dict(self.pathCrr, orient='index', columns=['cid'])
-        #print(pdCrr.iloc[:])
-        #print(pdCrr['cid'])
         mergedData = pd.concat([pdIds, pdCrr['cid']], axis=1, ignore_index=False)
-        #print(mergedData.iloc[0,0])
-        #print(mergedData.iloc[0,1])
-        print(mergedData.shape)
 
         # Create the save dialog box
         name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File',
-        '', 'All Files (*)', 'Csv file (*.csv)')
+        '', 'csv files (*.csv)', 'csv file (*.csv)')
 
         if not name:
             return
@@ -288,7 +283,7 @@ class Viewer(QtWidgets.QMainWindow):
         if self.csvExt in name:
             mergedData.to_csv(name, header=False, index=True)
         else:
-            message = 'Error saving file {name}.'
+            message = 'Error saving file {}.'.format(name)
             self.messageBox(message)
 
 
