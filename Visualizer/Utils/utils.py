@@ -153,7 +153,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
         self.figure = QtGui.QPixmap(figurePath)
         self.scale()
-        #self.paint()
+        self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
                
@@ -187,18 +187,18 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figure = self.figure.scaled(250, 400, 
                             QtCore.Qt.IgnoreAspectRatio, 
                             QtCore.Qt.SmoothTransformation) 
-    '''
+    
     def paint(self):
         # Add bounding frame here
-        picture = QtGui.QPixmap(253,253)
+        picture = QtGui.QPixmap(253,403)
         paint   = QtGui.QPainter(picture)
         #paint.begin()
         paint.setPen(QtGui.QColor(255,34,255))
-        paint.drawRect(0,0,253, 253)
+        paint.drawRect(0,0,253, 403)
         paint.drawPixmap(3,3, self.figure)
         #self.figure = picture #LOLLL       
         paint.end()
-    '''
+    
     def deleteItem(self):
         pass
 
