@@ -37,6 +37,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
 
     def okAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
+        self.view.lineFigures.createItem(self.view.lineFigurePath)
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -44,6 +45,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
     def lineAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
         self.view.pathIds[self.view.lineFigurePath] = 0
+        self.view.lineFigures.createItem(self.view.lineFigurePath)
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -51,6 +53,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
         self.view.pathIds[self.view.lineFigurePath] = 1
+        self.view.barFigures.createItem(self.view.lineFigurePath)       
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -86,7 +89,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
             
             barAction.setEnabled(False)
 
-            # if the figure is unlabeled, enable the line action
+            # if the figure is unlabeled, enable the bar action
             if self.view.pathIds[self.view.barFigurePath] == 2:
                 barAction.setEnabled(True)
 
@@ -98,7 +101,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
 
     def okAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
-        #self.view.createPixItem(self.view.barFigurePath)
+        self.view.barFigures.createItem(self.view.barFigurePath)
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()
@@ -106,6 +109,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def lineAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 0
+        self.view.lineFigures.createItem(self.view.barFigurePath)       
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()
@@ -127,27 +131,76 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
 
 
 class LineFigures(QtWidgets.QGraphicsScene):
-    """docstring for LineFigures"""
+    """docstring for LineFigures
+    """
     def __init__(self, parent=None):
-       super(LineFigures, self).__init__(parent)
-       self.view        = parent
-       self.figuresList = []
+        super(LineFigures, self).__init__(parent)
+        self.view        = parent
+        self.figuresList = []
+        
+        # The fixed size of single figure scene
+        self.scaleX     = 280
+        self.scaleY     = 400
 
-    def scale(self, image):
-        fx, fy = image.width()/2., image.height()/2.
-        scaleMatrix = QtGui.QTransform.fromScale(fx, fy)
+    def createItem(self, figurePath):
+        self.figureItem = QtWidgets.QGraphicsPixmapItem()
+        self.figure = QtGui.QPixmap(figurePath)
+        self.scale()
+        self.paint()
+        self.figureItem.setPixmap(self.figure)
+        self.figuresList.append(self.figureItem)
+               
+        x, y = self.view.getWidgetPos(self.view.displayLineFigures)
+        w, h = self.view.getWidgetDims(self.figure)
+        if len(self.figuresList) == 1:
+            # Set scene geometry
+            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,w,h))
+            self.view.lineFigures.addItem(self.figureItem)
+        else:
+            offset = len(self.figuresList)
+            self.arrangeScene(x, y, w, h, offset)
+            self.view.lineFigures.addItem(self.figureItem)
+            self.figureItem.setPos((offset-1)*w,0)
+    
+    def arrangeScene(self, x, y, w, h, offset):
+        if x+offset*w > self.view.screenWidth:
+            self.view.displayLineFigures.translate(w,0)
+        else:
+            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
 
-    def create(self):
-        pass
+    def scale(self):
+        self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
+                            QtCore.Qt.IgnoreAspectRatio, 
+                            QtCore.Qt.SmoothTransformation) 
+    
+    def paint(self):
+        # Add bounding frame here
+        color   = (182,182,182)
+        width   = 3
+        picture = QtGui.QPixmap(
+                    self.figure.width()+2*width,
+                    self.figure.height()+2*width)
 
+        paint   = QtGui.QPainter(picture)
+        pen     = QtGui.QPen(QtGui.QColor(*color))
+        pen.setWidth(width)
+        paint.setPen(pen)
+        paint.drawRect(0, 0, self.figure.width()+1, self.figure.height()+1)
+        paint.drawPixmap(width-1,width-1, self.figure)
+        self.figure = picture
+        paint.end()
 
 class BarFigures(QtWidgets.QGraphicsScene):
-    """docstring for BarFigures
+    """docstring for BarFigures scene
     """
     def __init__(self, parent=None):
         super(BarFigures, self).__init__(parent)
         self.view        = parent
         self.figuresList = []
+        
+        # The fixed size of single figure scene
+        self.scaleX     = 280
+        self.scaleY     = 400
 
     def createItem(self, figurePath):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
@@ -160,9 +213,8 @@ class BarFigures(QtWidgets.QGraphicsScene):
         x, y = self.view.getWidgetPos(self.view.displayBarFigures)
         w, h = self.view.getWidgetDims(self.figure)
         if len(self.figuresList) == 1:
+            # Set scene geometry
             self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,w,h))
-            self.view.displayBarFigures.fitInView(self.view.barFigures.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
-            # set geometry
             self.view.barFigures.addItem(self.figureItem)
         else:
             offset = len(self.figuresList)
@@ -174,62 +226,30 @@ class BarFigures(QtWidgets.QGraphicsScene):
         if x+offset*w > self.view.screenWidth:
             self.view.displayBarFigures.translate(w,0)
         else:
-            self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
-
-    def seperator(self, x, y, w, h):
-            # Line seperator among pixmap items
-            offset = len(self.figuresList)
-            line = QtWidgets.QGraphicsLineItem(x+w,y,x+w,y+h)
-            self.view.barFigures.addItem(line)
-            self.figureItem.setPos((offset-1)*w,0)    
+            self.view.displayBarFigures.setGeometry(
+                QtCore.QRect(x,y,offset*w,h))
 
     def scale(self):
-        self.figure = self.figure.scaled(250, 400, 
+        self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
                             QtCore.Qt.IgnoreAspectRatio, 
                             QtCore.Qt.SmoothTransformation) 
     
     def paint(self):
         # Add bounding frame here
-        picture = QtGui.QPixmap(253,403)
+        color  = (182,182,182)
+        width   = 3
+        picture = QtGui.QPixmap(
+                    self.figure.width()+2*width,
+                    self.figure.height()+2*width)
+
         paint   = QtGui.QPainter(picture)
-        #paint.begin()
-        paint.setPen(QtGui.QColor(255,34,255))
-        paint.drawRect(0,0,253, 403)
-        paint.drawPixmap(3,3, self.figure)
-        #self.figure = picture #LOLLL       
+        pen     = QtGui.QPen(QtGui.QColor(*color))
+        pen.setWidth(width)
+        paint.setPen(pen)
+        paint.drawRect(0, 0, self.figure.width()+1, self.figure.height()+1)
+        paint.drawPixmap(width-1,width-1, self.figure)
+        self.figure = picture        
         paint.end()
-    
-    def deleteItem(self):
-        pass
-
-"""
-Obsolete, use methods inside scenes!
-class FigureItem(QtWidgets.QGraphicsPixmapItem):
-    '''Object which holds the properties and methods for each figure in the widget  
-    which shows the corrected figures which classified by hand.
-    '''
-
-    def __init__(self, figurePath, parent=None):
-        print(figurePath, parent)
-        super(FigureItem, self).__init__(figurePath, parent)
-        self.path   = figurePath
-        self.figure = QtGui.QPixmap().load(self.path)
-        self.scale()
-        self.paint()
-
-    def scale(self):
-        self.figure = self.figure.scaled(250, 250, 
-                            QtCore.Qt.IgnoreAspectRatio, 
-                            QtCore.Qt.SmoothTransformation) 
-
-    def paint(self):
-        picture = QtGui.QPixmap(253,253)
-        paint   = QtGui.QPainter(picture)
-        paint.setPen(QtGui.QColor(255,34,255,255), 3)
-        paint.drawRect(0,0,253, 253)
-        paint.drawPixmap(3,3, self.figure)
-        self.figure = picture #LOLLL
-"""
 
 if __name__ == '__main__':
     raise Exception('This module is not executable')

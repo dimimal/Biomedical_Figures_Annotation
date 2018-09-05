@@ -8,7 +8,6 @@ import random
 import pandas as pd
 import os
 import numpy as np
-import re
 
 from sklearn.externals import joblib
 from Utils.utils import (GraphicsLineScene, 
@@ -29,7 +28,7 @@ class Viewer(QtWidgets.QMainWindow):
         self.pathIds   = {}
         self.pathCrr   = {}
         
-        # Set the figgures 
+        # Initialize the figures 
         self.lineFigure = QtGui.QImage()
         self.barFigure  = QtGui.QImage() 
         
@@ -101,12 +100,6 @@ class Viewer(QtWidgets.QMainWindow):
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
         
-        '''Obsolete stuff(playing around)
-        gridLayout.setColumnMinimumWidth(1, 200) 
-        gridLayout.setRowMinimumHeight(2, 200)
-        gridLayout.setRowMinimumHeight(4, 200)
-        '''
-
         # Set the text font 
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -135,11 +128,11 @@ class Viewer(QtWidgets.QMainWindow):
         # Define text widgets 
         lineText = QtWidgets.QLabel()
         lineText.setFont(font)
-        lineText.setText('Line Figure')
+        lineText.setText('Line Figures Classification')
         #
         barText = QtWidgets.QLabel()
         barText.setFont(font)
-        barText.setText('Bar Figure')        
+        barText.setText('Bar Figures Classification')        
         
         # Add widgets to grid layout
         gridLayout.addWidget(lineText, 1, 0, 1, -1, QtCore.Qt.AlignHCenter)
@@ -157,12 +150,9 @@ class Viewer(QtWidgets.QMainWindow):
         self.screenWidth  = QtWidgets.QDesktopWidget().width()
         self.screenHeight = QtWidgets.QDesktopWidget().height()
 
-        print(self.displayBarFigures.pos())
-        print(self.displayBarFigures.mapToGlobal(self.displayBarFigures.pos()))
-        #print(self.displayBarFigures.mapFrom(self, self.displayBarFigures.pos()))
 
     def loadPredictions(self):
-        """Load the joblib file which contains the dictionary of 
+        """Load the joblib or csv file which contains the dictionary of 
         predictions
         """
 
@@ -298,7 +288,7 @@ class Viewer(QtWidgets.QMainWindow):
             self.messageBox(message)
 
     def trainModel(self):
-        pass
+        model = VGG19(include_top=False, input_shape=(img_rows, img_cols,channels), pooling=None, weights='imagenet')
 
     def messageBox(self, message):
         msg = QtWidgets.QMessageBox()
