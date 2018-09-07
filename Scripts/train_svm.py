@@ -62,7 +62,6 @@ def load_image(imagePath, show=False, scale=True, sampleSize=(800,600)):
 def upsampling(image):
     '''
     Takes as input the image and returns the upsampled image
-
     '''
     pass
 

@@ -8,8 +8,14 @@ import random
 import pandas as pd
 import os
 import numpy as np
+from scipy.misc import imresize
 
+from keras.preprocessing import image
+from keras.models import Model, Sequential
+from keras.applications.resnet50 import preprocess_input
+from keras.applications.vgg19 import VGG19
 from sklearn.externals import joblib
+from sklearn.svm import SVC 
 from Utils.utils import (GraphicsLineScene, 
                          GraphicsBarScene, 
                          LineFigures, 
@@ -201,7 +207,7 @@ class Viewer(QtWidgets.QMainWindow):
                 break
 
     def selectFigures(self):
-        """Go through figures that they have not been
+        """Go through figures which have not been
         classified manually
         """ 
         for path, cid in self.pathCrr.items():
@@ -288,7 +294,56 @@ class Viewer(QtWidgets.QMainWindow):
             self.messageBox(message)
 
     def trainModel(self):
+        img_rows = 800
+        img_cols = 600
+        channels = 3
+        imgFeats = np.array([])
+        yLabels  = np.array([])
+
+        # Instantiate model
         model = VGG19(include_top=False, input_shape=(img_rows, img_cols,channels), pooling=None, weights='imagenet')
+
+        
+        for path, cid in self.pathCrr.items():
+            if cid == 1:
+                figure  = self.loadImage(path, sampleSize=(img_rows, img_cols))
+                yLabels = np.append(yLabels, np.float(self.pathIds[path]))
+                y_pred  = model.predict(figure, verbose=1)    
+
+                # check dimensions
+                if imgFeats.size == 0:
+                    #imgFeats = np.expand_dims(y_pred, axis=0)
+                    imgFeats = y_pred
+                else:
+                    imgFeats = np.concatenate((imgFeats, np.expand_dims(y_pred, axis=0)), axis=0)
+
+        # Reshape features
+        print(imgFeats.shape)
+        imgFeats = np.reshape(imgFeats, (imgFeats.shape[0], -1))
+        svm = self.svmClassifier(imgFeats, yLabels)
+        self.saveSvmModel(svm)
+    
+    def saveSvmModel(self, model):
+        """Needs to be reimplemented with proper gui
+        """
+        joblib.dump(model, 'model.pkl')
+
+    def svmClassifier(self, feats, labels, coef=12.):
+        return SVC(C=coef).fit(feats, labels)
+
+    def loadImage(self, imagePath, show=False, scale=True, sampleSize=(800,600)):
+        img = image.load_img(imagePath)
+        img = image.img_to_array(img)
+
+        # Scale image
+        if scale:
+            img = imresize(img, size=sampleSize, interp='cubic')
+            print(img.shape)
+            img = np.clip(img, 0, 255)
+        img = np.expand_dims(img, axis=0)
+        img = preprocess_input(img)
+
+        return img
 
     def messageBox(self, message):
         msg = QtWidgets.QMessageBox()
@@ -309,7 +364,6 @@ class Viewer(QtWidgets.QMainWindow):
     # Destructor
     def __del__(self):
         return
-
                          
 if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)
