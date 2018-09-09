@@ -10,16 +10,17 @@ import os
 import numpy as np
 from scipy.misc import imresize
 
-from keras.preprocessing import image
-from keras.models import Model, Sequential
-from keras.applications.resnet50 import preprocess_input
-from keras.applications.vgg19 import VGG19
+#from keras.preprocessing import image
+#from keras.models import Model, Sequential
+#from keras.applications.resnet50 import preprocess_input
+#from keras.applications.vgg19 import VGG19
 from sklearn.externals import joblib
 from sklearn.svm import SVC 
 from Utils.utils import (GraphicsLineScene, 
                          GraphicsBarScene, 
                          LineFigures, 
-                         BarFigures)
+                         BarFigures,
+                         Overlay)
 
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
@@ -53,10 +54,8 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Add the tool buttons
         iconDir = os.path.join( os.path.dirname(sys.argv[0]) , 'icons' )
-        #
         loadAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'open.png' )), '&Tools', self)
-        loadAction.setShortcuts(['o'])
-        #
+        loadAction.setShortcuts(['Ctrl+O'])
         loadAction.triggered.connect( self.loadPredictions )
         self.toolbar.addAction(loadAction)
         loadAction.setToolTip('Open File')
@@ -100,8 +99,7 @@ class Viewer(QtWidgets.QMainWindow):
         gridLayout = QtWidgets.QGridLayout()      
         gridLayout.setOriginCorner(QtCore.Qt.TopLeftCorner)
         
-        # Set QWidget object as main window in order to develop the 
-        # appropriate functions
+        # Set QWidget object as main window in order to develop the appropriate functions
         widget = QtWidgets.QWidget(self)
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
@@ -156,6 +154,18 @@ class Viewer(QtWidgets.QMainWindow):
         self.screenWidth  = QtWidgets.QDesktopWidget().width()
         self.screenHeight = QtWidgets.QDesktopWidget().height()
 
+
+        self.overlay = Overlay(self)
+        self.overlay.show()
+
+    def resizeEvent(self, event):
+        """Resize overlay according to widget size
+        """
+        self.overlay.resize(event.size())
+        # Move to the center of the widget
+        self.overlay.move(self.rect().center() - self.overlay.rect().center())
+        event.accept()
+        
 
     def loadPredictions(self):
         """Load the joblib or csv file which contains the dictionary of 
@@ -303,7 +313,10 @@ class Viewer(QtWidgets.QMainWindow):
         # Instantiate model
         model = VGG19(include_top=False, input_shape=(img_rows, img_cols,channels), pooling=None, weights='imagenet')
 
-        
+        # Instantiate Loading Logo
+        self.overlay = Overlay(self)
+        self.overlay.show()
+
         for path, cid in self.pathCrr.items():
             if cid == 1:
                 figure  = self.loadImage(path, sampleSize=(img_rows, img_cols))
@@ -312,16 +325,16 @@ class Viewer(QtWidgets.QMainWindow):
 
                 # check dimensions
                 if imgFeats.size == 0:
-                    #imgFeats = np.expand_dims(y_pred, axis=0)
                     imgFeats = y_pred
                 else:
                     imgFeats = np.concatenate((imgFeats, np.expand_dims(y_pred, axis=0)), axis=0)
 
         # Reshape features
-        print(imgFeats.shape)
+        # print(imgFeats.shape)
         imgFeats = np.reshape(imgFeats, (imgFeats.shape[0], -1))
         svm = self.svmClassifier(imgFeats, yLabels)
         self.saveSvmModel(svm)
+        self.overlay.hide() # Hide Logo
     
     def saveSvmModel(self, model):
         """Needs to be reimplemented with proper gui

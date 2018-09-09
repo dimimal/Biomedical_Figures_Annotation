@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5 import QtCore
 import sys
+import math
 
 class GraphicsLineScene(QtWidgets.QGraphicsScene):
     """class which holds the qgraphics scene widget about line graphs along with 
@@ -160,11 +161,11 @@ class LineFigures(QtWidgets.QGraphicsScene):
             offset = len(self.figuresList)
             self.arrangeScene(x, y, w, h, offset)
             self.view.lineFigures.addItem(self.figureItem)
-            self.figureItem.setPos((offset-1)*w,0)
+            self.figureItem.setPos((offset-1)*w,0) # 6 is the painting offset
     
     def arrangeScene(self, x, y, w, h, offset):
         if x+offset*w > self.view.screenWidth:
-            self.view.displayLineFigures.translate(w,0)
+            self.view.displayLineFigures.translate(w+6,0)
         else:
             self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
 
@@ -224,7 +225,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
     
     def arrangeScene(self, x, y, w, h, offset):
         if x+offset*w > self.view.screenWidth:
-            self.view.displayBarFigures.translate(w,0)
+            self.view.displayBarFigures.translate(w+6,0)
         else:
             self.view.displayBarFigures.setGeometry(
                 QtCore.QRect(x,y,offset*w,h))
@@ -250,6 +251,48 @@ class BarFigures(QtWidgets.QGraphicsScene):
         paint.drawPixmap(width-1,width-1, self.figure)
         self.figure = picture        
         paint.end()
+
+class Overlay(QtWidgets.QWidget):
+    """Overlay widget for loading while training 
+    """
+    def __init__(self, parent = None):
+        super(Overlay, self).__init__(parent)
+        palette = QtGui.QPalette()
+        palette.setColor(palette.Background, QtCore.Qt.transparent)
+        self.setPalette(palette)
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_NoSystemBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground);
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents);
+       
+    def paintEvent(self, event):
+   
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+       
+        for i in range(6):
+            if (self.counter / 5) % 6 == i:
+                painter.setBrush(QtGui.QBrush(QtGui.QColor(127 + (self.counter % 5)*32, 127, 127)))
+            else:
+                painter.setBrush(QtGui.QBrush(QtGui.QColor(127, 127, 127)))
+                painter.drawEllipse(
+                self.width()/2 + 30 * math.cos(2 * math.pi * i / 6.0) - 10,
+                self.height()/2 + 30 * math.sin(2 * math.pi * i / 6.0) - 10,
+                20, 20)
+       
+        painter.end()
+   
+    def showEvent(self, event):
+        # Set time interval
+        self.timer   = self.startTimer(90)
+        self.counter = 0
+   
+    def timerEvent(self, event):
+   
+        self.counter += 1
+        self.update()
 
 if __name__ == '__main__':
     raise Exception('This module is not executable')
