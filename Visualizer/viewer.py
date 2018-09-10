@@ -49,6 +49,8 @@ class Viewer(QtWidgets.QMainWindow):
     def initUI(self):
         """Initialize the UI 
         """
+
+        # Instantiate toolbar
         self.toolbar = self.addToolBar('Tools')
         self.toolbar.setMovable(False)
 
@@ -79,12 +81,15 @@ class Viewer(QtWidgets.QMainWindow):
         trainAction.setShortcuts(['Ctrl+L'])
         self.toolbar.addAction(trainAction)
 
-        # Init docked widgets
-        self.initDocks()
+        self.defaultStatusBar = 'Ready'
+        self.statusBar().showMessage(self.defaultStatusBar)
 
         # Enable mouse move events
         self.setMouseTracking(True)
         self.toolbar.setMouseTracking(True)
+        
+        # Init docked widgets
+        self.initDocks()
         
         # Open main window in full screen
         self.showFullScreen()
@@ -154,15 +159,16 @@ class Viewer(QtWidgets.QMainWindow):
         self.screenWidth  = QtWidgets.QDesktopWidget().width()
         self.screenHeight = QtWidgets.QDesktopWidget().height()
 
-
+        # Overlay loading widget
         self.overlay = Overlay(self)
-        self.overlay.show()
+        self.overlay.hide()
+
 
     def resizeEvent(self, event):
         """Resize overlay according to widget size
         """
         self.overlay.resize(event.size())
-        # Move to the center of the widget
+        # Move gif to the center of the widget
         self.overlay.move(self.rect().center() - self.overlay.rect().center())
         event.accept()
         
