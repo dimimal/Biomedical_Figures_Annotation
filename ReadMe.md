@@ -20,8 +20,7 @@ Run `pip install -r requirements.txt` to automatically install the dependencies 
 * Click the training button to train on the small subset in order to get better results.
 * Continue the annotation.
 
+### Example
 
-![Input Image](https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png){:height="50%" width="50%"}
-
-<img src="https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png" width="800" height="600">
+<img src="https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png" width="512" height="512">
 
