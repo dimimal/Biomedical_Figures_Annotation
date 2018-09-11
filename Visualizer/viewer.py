@@ -218,7 +218,7 @@ class Viewer(QtWidgets.QMainWindow):
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
             # Debug
-            fileName = ['/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset']
+            #fileName = ['/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset']
             print(fileName)
             if os.path.isdir(str(fileName[0])):
                 self.loadFolder(str(fileName[0]))
@@ -236,7 +236,7 @@ class Viewer(QtWidgets.QMainWindow):
             for file_ in files:
                 if self.imageExt in file_:   
                     paths.append(os.path.join(root, file_))
-
+                    
         self.pathCrr = {path:0 for path in paths}
         self.pathIds = {path:2 for path in paths}
 
