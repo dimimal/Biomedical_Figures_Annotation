@@ -1,6 +1,6 @@
 # Biomedical Figures Annotator 
 
-A GUI based annotation tool to annotate figures from Biomedical literature (e.g. Pubmed).  
+A GUI based semi annotation tool to annotate chart figures according to their type (e.g. Bar chart, Line chart) from Biomedical literature (e.g. Pubmed).  
 
 ## Dependencies
 * pyQt5
@@ -11,4 +11,15 @@ A GUI based annotation tool to annotate figures from Biomedical literature (e.g.
 * keras
 * tensorflow
 
-Run `pip install -r requirements.txt` to automatically install the dependencies in your virtual environment. 
+Run `pip install -r requirements.txt` to automatically install the dependencies in your virtual environment. Execute the `viewer.py` file. Tested with `python 3.6` and `tensorflow 1.4`. 
+
+# Guide
+*  select open file from the toolbar.
+* select the folder which contains the papers along with the figure charts from pubmed.
+* Annotate some images 
+* Click the training button to train on the small subset in order to get better results.
+* Continue the annotation.
+
+
+![Input Image](https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png)
+
