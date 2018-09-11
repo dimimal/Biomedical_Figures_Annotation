@@ -67,7 +67,14 @@ class Viewer(QtWidgets.QMainWindow):
         exitAction.setShortcuts(['Esc'])
         exitAction.triggered.connect( self.close )
         self.toolbar.addAction(exitAction)
-        exitAction.setToolTip('Exit')           
+        exitAction.setToolTip('Exit')
+
+        # Open the csv file action
+        csvAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'csv.png' )), '&Tools', self)
+        csvAction.setShortcuts(['Ctrl+o'])
+        csvAction.triggered.connect( self.openCsv )
+        self.toolbar.addAction(csvAction)
+        csvAction.setToolTip('Open Csv')                 
 
         saveAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'save.png' )), '&Tools', self)
         saveAction.triggered.connect(self.saveData)
@@ -171,13 +178,8 @@ class Viewer(QtWidgets.QMainWindow):
         # Move gif to the center of the widget
         self.overlay.move(self.rect().center() - self.overlay.rect().center())
         event.accept()
-        
-
-    def loadPredictions(self):
-        """Load the joblib or csv file which contains the dictionary of 
-        predictions
-        """
-
+    
+    def openCsv(self):
         dir_path     = os.path.dirname(os.path.realpath(__file__))
         message      = 'Select csv file' 
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
@@ -190,14 +192,54 @@ class Viewer(QtWidgets.QMainWindow):
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
             if self.csvExt in str(fileName):
+                print(fileName)
                 self.loadCsv(str(fileName[0]))
+            else:
+                message = 'Only csv files'
+                self.messageBox(message)
+                return 
+
+        self.selectFigures()
+
+    def loadPredictions(self):
+        """Load the joblib or csv file which contains the dictionary of 
+        predictions
+        """
+
+        dir_path     = os.path.dirname(os.path.realpath(__file__))
+        message      = 'Select folder' 
+        folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
+        folderDialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        #folderDialog.setNameFilter('CSV files (*.csv)')
+        folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
+        fileName   = [] # Returns a list of the directory
+        
+        # Plot the window to select the csv file
+        if folderDialog.exec_():
+            fileName = folderDialog.selectedFiles()
+            # Debug
+            fileName = ['/media/dimitris/TOSHIBA EXT/Image_Document_Classification/PMC-Dataset']
+            print(fileName)
+            if os.path.isdir(str(fileName[0])):
+                self.loadFolder(str(fileName[0]))
             else:
                 message = 'Only csv files'
                 self.messageBox(message)
                 return
 
         self.selectFigures()
-        
+    
+    def loadFolder(self, path):
+        # Iterate through folders and get jpg files
+        paths = []
+        for root, dirs, files in os.walk(path):
+            for file_ in files:
+                if self.imageExt in file_:   
+                    paths.append(os.path.join(root, file_))
+
+        self.pathCrr = {path:0 for path in paths}
+        self.pathIds = {path:2 for path in paths}
+
     def loadCsv(self, file):
         data = pd.read_csv(file, header=None, names=['path', 'id', 'cid'])
         self.pathIds = data.set_index('path').to_dict()['id']
@@ -205,41 +247,33 @@ class Viewer(QtWidgets.QMainWindow):
     
     def nextLineFigure(self):
         for path, cid in self.pathCrr.items():
-            if cid == 0 and self.pathIds[path] == 0:
-                self.plotFigures(path)
-                break
-            elif cid == 0 and self.pathIds[path] == 2:
+            if cid == 0 and (self.pathIds[path] == 0 or self.pathIds[path] == 2):
+                if path == self.barFigurePath and self.barFigure is not None:
+                    continue
                 self.plotFigures(path)
                 break
 
 
     def nextBarFigure(self):
         for path, cid in self.pathCrr.items():
-            if cid == 0 and self.pathIds[path] == 1:
-                self.plotFigures(path)
-                break 
-            elif cid == 0 and self.pathIds[path] == 2:
+            if cid == 0 and (self.pathIds[path] == 1 or self.pathIds[path] == 2):
+                if path == self.lineFigurePath and self.lineFigurePath is not None:
+                    continue
                 self.plotFigures(path)
                 break
 
     def selectFigures(self):
-        """Go through figures which have not been
-        classified manually
-        """ 
-        for path, cid in self.pathCrr.items():
-            if cid == 0 and self.pathIds[path] == 0:
-                self.plotFigures(path)
-                break
-            elif cid == 0 and self.pathIds[path] == 2:
-                self.plotFigures(path)
-                break
-        for path, cid in self.pathCrr.items():
-            if cid == 0 and self.pathIds[path] == 1:
-                self.plotFigures(path)
-                break
-            elif cid == 0 and self.pathIds[path] == 2:
-                self.plotFigures(path)
-                break
+        """Go through figures from the loaded file  
+        """
+        # Random pick
+        dict_items = list(self.pathCrr.items())
+        random.shuffle(dict_items)
+        self.pathCrr = {}
+        self.pathCrr = {key:value for (key,value) in dict_items}
+        
+        self.nextBarFigure()
+        self.nextLineFigure()
+
 
     def getWidgetPos(self, widget):
         return widget.x(), widget.y() 
@@ -254,7 +288,7 @@ class Viewer(QtWidgets.QMainWindow):
             self.lineFigurePath = path
             self.lineFigure.load(path)
             self.lineFigure = self.lineFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
-            # TODO:: ### handle low resolution images ######
+            # TODO:: ### handle low resolution figures
             self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
             x, y = self.getWidgetPos(self.displayLineFigure)
             w, h = self.getWidgetDims(self.lineFigure) 
@@ -315,6 +349,7 @@ class Viewer(QtWidgets.QMainWindow):
         channels = 3
         imgFeats = np.array([])
         yLabels  = np.array([])
+        allPaths = [] # Keep the paths of labeled figures
 
         # Instantiate model
         model = VGG19(include_top=False, input_shape=(img_rows, img_cols,channels), pooling=None, weights='imagenet')
@@ -328,6 +363,7 @@ class Viewer(QtWidgets.QMainWindow):
                 figure  = self.loadImage(path, sampleSize=(img_rows, img_cols))
                 yLabels = np.append(yLabels, np.float(self.pathIds[path]))
                 y_pred  = model.predict(figure, verbose=1)    
+                allPaths.append(path)
 
                 # check dimensions
                 if imgFeats.size == 0:
@@ -340,7 +376,13 @@ class Viewer(QtWidgets.QMainWindow):
         imgFeats = np.reshape(imgFeats, (imgFeats.shape[0], -1))
         svm = self.svmClassifier(imgFeats, yLabels)
         self.saveSvmModel(svm)
+
+        # Update the class ids
+        for index, path in enumerate(allPaths):
+            self.pathIds[path] = yLabels[index]
+
         self.overlay.hide() # Hide Logo
+        self.selectFigures()
     
     def saveSvmModel(self, model):
         """Needs to be reimplemented with proper gui

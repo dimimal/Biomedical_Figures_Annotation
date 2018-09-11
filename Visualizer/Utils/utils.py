@@ -221,11 +221,11 @@ class BarFigures(QtWidgets.QGraphicsScene):
             offset = len(self.figuresList)
             self.arrangeScene(x, y, w, h, offset)
             self.view.barFigures.addItem(self.figureItem)
-            self.figureItem.setPos((offset-1)*w,0)
+            self.figureItem.setPos(((offset-1)*w)+3,0)
     
     def arrangeScene(self, x, y, w, h, offset):
         if x+offset*w > self.view.screenWidth:
-            self.view.displayBarFigures.translate(w+6,0)
+            self.view.displayBarFigures.translate(w+3,0)
         else:
             self.view.displayBarFigures.setGeometry(
                 QtCore.QRect(x,y,offset*w,h))
@@ -253,7 +253,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
         paint.end()
 
 class Overlay(QtWidgets.QWidget):
-    """Overlay widget for loading while training 
+    """Overlay widget for loading gif while training 
     """
     def __init__(self, parent = None):
         super(Overlay, self).__init__(parent)
