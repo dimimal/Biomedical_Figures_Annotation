@@ -21,5 +21,5 @@ Run `pip install -r requirements.txt` to automatically install the dependencies 
 * Continue the annotation.
 
 
-![Input Image](https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png =512x512)
+![Input Image](https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png){:height="50%" width="50%"}
 
