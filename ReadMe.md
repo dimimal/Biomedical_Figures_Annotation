@@ -23,3 +23,5 @@ Run `pip install -r requirements.txt` to automatically install the dependencies 
 
 ![Input Image](https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png){:height="50%" width="50%"}
 
+<img src="https://github.com/dimimal/Biomedical_Figures_Annotation/blob/master/Pictures/show_4.png" width="800" height="600">
+
