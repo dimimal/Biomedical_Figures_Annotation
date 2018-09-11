@@ -10,10 +10,10 @@ import os
 import numpy as np
 from scipy.misc import imresize
 
-#from keras.preprocessing import image
-#from keras.models import Model, Sequential
-#from keras.applications.resnet50 import preprocess_input
-#from keras.applications.vgg19 import VGG19
+from keras.preprocessing import image
+from keras.models import Model, Sequential
+from keras.applications.resnet50 import preprocess_input
+from keras.applications.vgg19 import VGG19
 from sklearn.externals import joblib
 from sklearn.svm import SVC 
 from Utils.utils import (GraphicsLineScene, 

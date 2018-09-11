@@ -13,7 +13,7 @@ A GUI based semi annotation tool to annotate chart figures according to their ty
 
 Run `pip install -r requirements.txt` to automatically install the dependencies in your virtual environment. Execute the `viewer.py` file. Tested with `python 3.6` and `tensorflow 1.4`. 
 
-# Guide
+## Guide
 *  select open file from the toolbar.
 * select the folder which contains the papers along with the figure charts from pubmed.
 * Annotate some images 
