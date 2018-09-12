@@ -152,24 +152,25 @@ class LineFigures(QtWidgets.QGraphicsScene):
         self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
-               
+        self.offset = len(self.figuresList)               
+        
         x, y = self.view.getWidgetPos(self.view.displayLineFigures)
         w, h = self.view.getWidgetDims(self.figure)
-        if len(self.figuresList) == 1:
+        
+        if  self.offset == 1:
             # Set scene geometry
             self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,w,h))
             self.view.lineFigures.addItem(self.figureItem)
         else:
-            offset = len(self.figuresList)
-            self.arrangeScene(x, y, w, h, offset)
+            self.arrangeScene(x, y, w, h)
             self.view.lineFigures.addItem(self.figureItem)
-            self.figureItem.setPos((offset-1)*w,0) # 6 is the painting offset
+            self.figureItem.setPos(-(self.offset-1)*w,0) 
     
-    def arrangeScene(self, x, y, w, h, offset):
-        if x+offset*w > self.view.screenWidth:
-            self.view.displayLineFigures.translate(w+6,0)
+    def arrangeScene(self, x, y, w, h):
+        if x+self.offset*w > self.view.screenWidth:
+            self.view.displayLineFigures.translate(w+2*self.brushWidth,0)
         else:
-            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,offset*w+6,h))
+            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,self.offset*w+2*self.brushWidth,h))
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
@@ -181,7 +182,7 @@ class LineFigures(QtWidgets.QGraphicsScene):
         picture      = QtGui.QPixmap(self.figure.width()+2*self.brushWidth-1,                         self.figure.height()+2*self.brushWidth-1)
 
         # Create Painter
-        qp  = QtGui.Qqper(picture)
+        qp  = QtGui.QPainter(picture)
         pen = QtGui.QPen(QtGui.QColor(*self.color))
         pen.setWidth(self.brushWidth)
         qp.setPen(pen)
@@ -200,6 +201,10 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.view        = parent
         self.figuresList = []
         
+        # Painter Options
+        self.color      = (182,182,182)
+        self.brushWidth = 3
+
         # The fixed size of single figure scene
         self.scaleX     = 280
         self.scaleY     = 400
@@ -211,25 +216,25 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
-               
+        self.offset = len(self.figuresList)
+
         x, y = self.view.getWidgetPos(self.view.displayBarFigures)
         w, h = self.view.getWidgetDims(self.figure)
-        if len(self.figuresList) == 1:
-            # Set scene geometry
+        
+        if self.offset == 1:
+            # Set scene geometry equal to single figure
             self.view.displayBarFigures.setGeometry(QtCore.QRect(x,y,w,h))
             self.view.barFigures.addItem(self.figureItem)
         else:
-            offset = len(self.figuresList)
-            self.arrangeScene(x, y, w, h, offset)
+            self.arrangeScene(x, y, w, h)
             self.view.barFigures.addItem(self.figureItem)
-            self.figureItem.setPos(-((offset-1)*w+3),0)
+            self.figureItem.setPos(-(self.offset-1)*w,0)
     
-    def arrangeScene(self, x, y, w, h, offset):
-        if x+offset*w > self.view.screenWidth:
-            self.view.displayBarFigures.translate(-(w+3),0)
+    def arrangeScene(self, x, y, w, h):
+        if  x+self.offset*w > self.view.screenWidth:
+            self.view.displayBarFigures.translate(w+2*self.brushWidth,0)
         else:
-            self.view.displayBarFigures.setGeometry(
-                QtCore.QRect(x,y,offset*w,h))
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(x, y,      self.offset*w+2*self.brushWidth, h))
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
@@ -237,21 +242,19 @@ class BarFigures(QtWidgets.QGraphicsScene):
                             QtCore.Qt.SmoothTransformation) 
     
     def paint(self):
-        # Add bounding frame here
-        color  = (182,182,182)
-        width   = 3
-        picture = QtGui.QPixmap(
-                    self.figure.width()+2*width,
-                    self.figure.height()+2*width)
+        # Add bounding frame        
+        picture      = QtGui.QPixmap(self.figure.width()+2*self.brushWidth-1,                         self.figure.height()+2*self.brushWidth-1)
 
-        paint   = QtGui.QPainter(picture)
-        pen     = QtGui.QPen(QtGui.QColor(*color))
-        pen.setWidth(width)
-        paint.setPen(pen)
-        paint.drawRect(0, 0, self.figure.width()+1, self.figure.height()+1)
-        paint.drawPixmap(width-1,width-1, self.figure)
-        self.figure = picture        
-        paint.end()
+        # Create Painter
+        qp  = QtGui.QPainter(picture)
+        pen = QtGui.QPen(QtGui.QColor(*self.color))
+        pen.setWidth(self.brushWidth)
+        qp.setPen(pen)
+        qp.drawRect(0, 0, self.figure.width()+self.brushWidth, 
+                        self.figure.height()+self.brushWidth)
+        qp.drawPixmap(self.brushWidth-1,self.brushWidth-1, self.figure)
+        self.figure = picture
+        qp.end()
 
 class Overlay(QtWidgets.QWidget):
     """Overlay widget for loading gif while training 
