@@ -138,10 +138,12 @@ class LineFigures(QtWidgets.QGraphicsScene):
         super(LineFigures, self).__init__(parent)
         self.view        = parent
         self.figuresList = []
+        self.color       = (182,182,182)
+        self.brushWidth  = 3
         
         # The fixed size of single figure scene
-        self.scaleX     = 280
-        self.scaleY     = 400
+        self.scaleX = 280
+        self.scaleY = 400
 
     def createItem(self, figurePath):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
@@ -175,19 +177,17 @@ class LineFigures(QtWidgets.QGraphicsScene):
                             QtCore.Qt.SmoothTransformation) 
     
     def paint(self):
-        # Add bounding frame here
-        color        = (182,182,182)
-        brushWidth   = 3
-        picture      = QtGui.QPixmap(self.figure.width()+2*brushWidth-1,                         self.figure.height()+2*brushWidth-1)
+        # Add bounding frame        
+        picture      = QtGui.QPixmap(self.figure.width()+2*self.brushWidth-1,                         self.figure.height()+2*self.brushWidth-1)
 
         # Create Painter
         qp  = QtGui.Qqper(picture)
-        pen = QtGui.QPen(QtGui.QColor(*color))
-        pen.setWidth(brushWidth)
+        pen = QtGui.QPen(QtGui.QColor(*self.color))
+        pen.setWidth(self.brushWidth)
         qp.setPen(pen)
-        qp.drawRect(0, 0, self.figure.width()+brushWidth, 
-                        self.figure.height()+brushWidth)
-        qp.drawPixmap(brushWidth-1,brushWidth-1, self.figure)
+        qp.drawRect(0, 0, self.figure.width()+self.brushWidth, 
+                        self.figure.height()+self.brushWidth)
+        qp.drawPixmap(self.brushWidth-1,self.brushWidth-1, self.figure)
         self.figure = picture
         qp.end()
         # print(picture.rect())
@@ -222,11 +222,11 @@ class BarFigures(QtWidgets.QGraphicsScene):
             offset = len(self.figuresList)
             self.arrangeScene(x, y, w, h, offset)
             self.view.barFigures.addItem(self.figureItem)
-            self.figureItem.setPos(((offset-1)*w)+3,0)
+            self.figureItem.setPos(-((offset-1)*w+3),0)
     
     def arrangeScene(self, x, y, w, h, offset):
         if x+offset*w > self.view.screenWidth:
-            self.view.displayBarFigures.translate(w+3,0)
+            self.view.displayBarFigures.translate(-(w+3),0)
         else:
             self.view.displayBarFigures.setGeometry(
                 QtCore.QRect(x,y,offset*w,h))
