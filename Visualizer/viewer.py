@@ -10,10 +10,14 @@ import os
 import numpy as np
 from scipy.misc import imresize
 
-from keras.preprocessing import image
-from keras.models import Model, Sequential
-from keras.applications.resnet50 import preprocess_input
-from keras.applications.vgg19 import VGG19
+try:
+    from keras.preprocessing import image
+    from keras.models import Model, Sequential
+    from keras.applications.resnet50 import preprocess_input
+    from keras.applications.vgg19 import VGG19
+except ImportError:
+    pass
+
 from sklearn.externals import joblib
 from sklearn.svm import SVC 
 from Utils.utils import (GraphicsLineScene, 
@@ -41,7 +45,11 @@ class Viewer(QtWidgets.QMainWindow):
         
         # Hold the path for each figure frame      
         self.barFigurePath  = None
-        self.lineFigurePath = None        
+        self.lineFigurePath = None
+
+        # Set title
+        self.applicationTitle = 'BioTool Annotator v1.0'
+        self.setWindowTitle(self.applicationTitle)        
 
         # Instantiate the window
         self.initUI()
@@ -60,18 +68,12 @@ class Viewer(QtWidgets.QMainWindow):
         loadAction.setShortcuts(['Ctrl+O'])
         loadAction.triggered.connect( self.loadPredictions )
         self.toolbar.addAction(loadAction)
-        loadAction.setToolTip('Open File')
+        loadAction.setToolTip('Select folder')
 
-        # Close the application
-        exitAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'exit.png' )), '&Tools', self)
-        exitAction.setShortcuts(['Esc'])
-        exitAction.triggered.connect( self.close )
-        self.toolbar.addAction(exitAction)
-        exitAction.setToolTip('Exit')
-
+        
         # Open the csv file action
         csvAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'csv.png' )), '&Tools', self)
-        csvAction.setShortcuts(['Ctrl+o'])
+        csvAction.setShortcuts(['Ctrl+C'])
         csvAction.triggered.connect( self.openCsv )
         self.toolbar.addAction(csvAction)
         csvAction.setToolTip('Open Csv')                 
@@ -82,11 +84,26 @@ class Viewer(QtWidgets.QMainWindow):
         saveAction.setShortcuts(['Ctrl+S'])
         self.toolbar.addAction(saveAction)
 
+        # Save file to csv
         trainAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'learning.png' )), '&Tools', self)
         trainAction.triggered.connect(self.trainModel)
         trainAction.setToolTip('Train Model')
         trainAction.setShortcuts(['Ctrl+L'])
         self.toolbar.addAction(trainAction)
+
+        helpAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'help19.png' )), '&Tools', self)
+        helpAction.triggered.connect(self.displayHelpMessage)
+        helpAction.setToolTip('Help')
+        helpAction.setShortcuts(['Ctrl+H'])
+        self.toolbar.addAction(helpAction)
+        
+        # Close the application
+        exitAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'exit.png' )), '&Tools', self)
+        exitAction.setShortcuts(['Esc'])
+        exitAction.triggered.connect( self.close )
+        self.toolbar.addAction(exitAction)
+        exitAction.setToolTip('Exit')
+
 
         self.defaultStatusBar = 'Ready'
         self.statusBar().showMessage(self.defaultStatusBar)
@@ -94,7 +111,7 @@ class Viewer(QtWidgets.QMainWindow):
         # Enable mouse move events
         self.setMouseTracking(True)
         self.toolbar.setMouseTracking(True)
-        
+
         # Init docked widgets
         self.initDocks()
         
@@ -103,6 +120,9 @@ class Viewer(QtWidgets.QMainWindow):
         
         # Show
         self.show()
+        
+        # Display the help message
+        self.displayHelpMessage()
 
     def initDocks(self):
         """Initialize the docks inside the Main window
@@ -170,7 +190,6 @@ class Viewer(QtWidgets.QMainWindow):
         self.overlay = Overlay(self)
         self.overlay.hide()
 
-
     def resizeEvent(self, event):
         """Resize overlay according to widget size
         """
@@ -210,7 +229,6 @@ class Viewer(QtWidgets.QMainWindow):
         message      = 'Select folder' 
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.Directory)
-        #folderDialog.setNameFilter('CSV files (*.csv)')
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         fileName   = [] # Returns a list of the directory
         
@@ -236,7 +254,7 @@ class Viewer(QtWidgets.QMainWindow):
             for file_ in files:
                 if self.imageExt in file_:   
                     paths.append(os.path.join(root, file_))
-                    
+
         self.pathCrr = {path:0 for path in paths}
         self.pathIds = {path:2 for path in paths}
 
@@ -293,7 +311,7 @@ class Viewer(QtWidgets.QMainWindow):
             x, y = self.getWidgetPos(self.displayLineFigure)
             w, h = self.getWidgetDims(self.lineFigure) 
             self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
-            self.displayLineFigure.fitInView(x,y,w,h, QtCore.Qt.KeepAspectRatio)
+            self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
         elif self.pathIds[path] == 1:
             self.barFigurePath = path
             self.barFigure.load(path)
@@ -351,6 +369,10 @@ class Viewer(QtWidgets.QMainWindow):
         yLabels  = np.array([])
         allPaths = [] # Keep the paths of labeled figures
 
+        # Change status to training
+        message = 'Training...'
+        self.statusBar().showMessage(message)
+
         # Instantiate model
         model = VGG19(include_top=False, input_shape=(img_rows, img_cols,channels), pooling=None, weights='imagenet')
 
@@ -382,6 +404,7 @@ class Viewer(QtWidgets.QMainWindow):
             self.pathIds[path] = yLabels[index]
 
         self.overlay.hide() # Hide Logo
+        self.statusBar().showMessage(self.defaultStatusBar)
         self.selectFigures()
     
     def saveSvmModel(self, model):
@@ -419,7 +442,20 @@ class Viewer(QtWidgets.QMainWindow):
     def displayHelpMessage(self):
         """Help message box
         """
-        QtWidgets.QMessageBox.about(self, "This is the help message box")
+        message = self.applicationTitle + '\n\n'
+        message += 'INSTRUCTIONS\n'
+        message += ' - If you do not have any csv files with annotated figures, select the folder which contains the set of biomedical academic files and the tool extracts the \'jpg\' figures only\n'
+        message += ' - Annotate some figures by clicking right click and select the label to annotate\n' 
+        message += ' - Click the training button to get some predictions in order to classify the rest figures automatically\n\n'
+        message += 'CONTROLS\n'
+        message += ' - Select folder [ctrl+O]\n'
+        message += ' - Open csv file with annotations [ctrl+c]\n'
+        message += ' - Save the annotations to csv file [ctrl+s]\n'
+        message += ' - Train model [ctrl+L]\n'
+        message += ' - Help [ctr+H]\n'
+        message += ' - Exit viewer [esc]'
+
+        QtWidgets.QMessageBox.about(self, 'HELP', message)
         self.update()
 
     # Destructor

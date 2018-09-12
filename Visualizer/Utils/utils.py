@@ -167,7 +167,7 @@ class LineFigures(QtWidgets.QGraphicsScene):
         if x+offset*w > self.view.screenWidth:
             self.view.displayLineFigures.translate(w+6,0)
         else:
-            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,offset*w,h))
+            self.view.displayLineFigures.setGeometry(QtCore.QRect(x,y,offset*w+6,h))
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
@@ -176,20 +176,21 @@ class LineFigures(QtWidgets.QGraphicsScene):
     
     def paint(self):
         # Add bounding frame here
-        color   = (182,182,182)
-        width   = 3
-        picture = QtGui.QPixmap(
-                    self.figure.width()+2*width,
-                    self.figure.height()+2*width)
+        color        = (182,182,182)
+        brushWidth   = 3
+        picture      = QtGui.QPixmap(self.figure.width()+2*brushWidth-1,                         self.figure.height()+2*brushWidth-1)
 
-        paint   = QtGui.QPainter(picture)
-        pen     = QtGui.QPen(QtGui.QColor(*color))
-        pen.setWidth(width)
-        paint.setPen(pen)
-        paint.drawRect(0, 0, self.figure.width()+1, self.figure.height()+1)
-        paint.drawPixmap(width-1,width-1, self.figure)
+        # Create Painter
+        qp  = QtGui.Qqper(picture)
+        pen = QtGui.QPen(QtGui.QColor(*color))
+        pen.setWidth(brushWidth)
+        qp.setPen(pen)
+        qp.drawRect(0, 0, self.figure.width()+brushWidth, 
+                        self.figure.height()+brushWidth)
+        qp.drawPixmap(brushWidth-1,brushWidth-1, self.figure)
         self.figure = picture
-        paint.end()
+        qp.end()
+        # print(picture.rect())
 
 class BarFigures(QtWidgets.QGraphicsScene):
     """docstring for BarFigures scene
