@@ -159,7 +159,6 @@ class LineFigures(QtWidgets.QGraphicsScene):
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
         self.offset = len(self.figuresList)               
-        print(self.figure.rect())
 
         x, y = self.view.getWidgetPos(self.view.displayLineFigures)
         w, h = self.view.getWidgetDims(self.figure)
@@ -172,7 +171,6 @@ class LineFigures(QtWidgets.QGraphicsScene):
             self.arrangeScene(x, y, w, h)
             self.view.lineFigures.addItem(self.figureItem)
             self.figureItem.setPos(-(self.offset-1)*w,0)
-        # self.scrollbar.setSliderPosition(0) 
     
     def arrangeScene(self, x, y, w, h):
         if x+self.offset*w > self.view.screenWidth:
@@ -229,7 +227,6 @@ class BarFigures(QtWidgets.QGraphicsScene):
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
         self.offset = len(self.figuresList)
-        #print(self.figure.rect())
 
         x, y = self.view.getWidgetPos(self.view.displayBarFigures)
         w, h = self.view.getWidgetDims(self.figure)

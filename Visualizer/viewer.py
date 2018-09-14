@@ -40,6 +40,9 @@ class Viewer(QtWidgets.QMainWindow):
         self.pathIds   = {}
         self.pathCrr   = {}
         
+        # Init the ratio of widget scene
+        self.ratioOption = QtCore.Qt.IgnoreAspectRatio 
+
         # Initialize the figures 
         self.lineFigure = QtGui.QImage()
         self.barFigure  = QtGui.QImage() 
@@ -187,38 +190,20 @@ class Viewer(QtWidgets.QMainWindow):
         self.screenHeight = QtWidgets.QDesktopWidget().height()
 
         # Create slots to update slider initial position
-        self.displayBarFigures.horizontalScrollBar().rangeChanged.connect(self.barFigures.changeSliderPos)
-        self.displayLineFigures.horizontalScrollBar().rangeChanged.connect(self.lineFigures.changeSliderPos)
+        self.displayBarFigures.horizontalScrollBar().rangeChanged.connect(                               self.barFigures.changeSliderPos)
+        self.displayLineFigures.horizontalScrollBar().rangeChanged.connect(                               self.lineFigures.changeSliderPos)
 
         # Overlay loading widget
         self.overlay = Overlay(self)
         self.overlay.hide()
 
-        #print(gridLayout.cellRect(2,1))
-        self.setDockSize()
-
-    def setDockSize(self):
-        #TODO: needs apprpriate function to deal with variable figure sizes
-        if self.displayLineFigure.sizeHint().isValid():
-            pass
-            #self.displayLineFigure.setMinimumSize(self.displayLineFigure.sizeHint())
-            #self.displayLineFigure.setMaximumSize(self.displayLineFigure.sizeHint())
-            #self.displayLineFigure.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-
-        if self.displayBarFigure.sizeHint().isValid():
-            pass
-            #self.displayBarFigure.setMinimumSize(self.displayBarFigure.sizeHint())
-            #self.displayBarFigure.setMaximumSize(self.displayBarFigure.sizeHint())
-            #self.displayBarFigure.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        
-
     def resizeEvent(self, event):
         """Resize overlay according to widget size
         """
+        event.accept()
         self.overlay.resize(event.size())
         # Move gif to the center of the widget
         self.overlay.move(self.rect().center() - self.overlay.rect().center())
-        event.accept()
     
     def openCsv(self):
         dir_path     = os.path.dirname(os.path.realpath(__file__))
@@ -292,7 +277,6 @@ class Viewer(QtWidgets.QMainWindow):
                 self.plotFigures(path)
                 break
 
-
     def nextBarFigure(self):
         for path, cid in self.pathCrr.items():
             if cid == 0 and (self.pathIds[path] == 1 or self.pathIds[path] == 2):
@@ -304,7 +288,7 @@ class Viewer(QtWidgets.QMainWindow):
     def selectFigures(self):
         """Go through figures from the loaded file  
         """
-        # Random pick
+        # Shuffle the dictionary 
         dict_items = list(self.pathCrr.items())
         random.shuffle(dict_items)
         self.pathCrr = {}
@@ -320,80 +304,68 @@ class Viewer(QtWidgets.QMainWindow):
     def getWidgetDims(self, widget):
         return widget.width(), widget.height()
 
-    def getRatio(self, figure):
-        """Method which returns the aspect ratio option according to image size. Useful for low resolution figures
+    def checkFigureSize(self, figure):
+        """Resize low resolution figures in order to plot them properly
         """
-
-        # TODO: Add more control in size
+        # scale factor
+        f = 3
         width, height = self.getWidgetDims(figure)
-        if (width < 200) or (height < 200):
-            return QtCore.Qt.KeepAspectRatio 
-        else: 
-            return QtCore.Qt.IgnoreAspectRatio
+
+        if (width < 100) and (height < 100):
+            return figure.scaled(width*f, height*f, self.ratioOption, QtCore.Qt.SmoothTransformation)
+        elif width<100:
+            return figure.scaled(width*f, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
+
+        elif height<100:
+            return figure.scaled(self.width, height*f, self.ratioOption, QtCore.Qt.SmoothTransformation)
+        else:
+            return figure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
 
     def plotFigures(self, path):
         """Method which plots the figures in the scenes
         """
-        self.width  = 500 # self.screenWidth / 2
-        self.height = 400 # self.screenHeight / 2
-        self.ratioOption = QtCore.Qt.IgnoreAspectRatio # debug only
-
+        self.width  = 500 
+        self.height = 400 
+        
         if self.pathIds[path] == 0:
             self.lineFigurePath = path
             self.lineFigure.load(path)
-            # self.ratioOption = self.getRatio(self.lineFigure)
-            self.lineFigure  = self.lineFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
-            # TODO:: ### handle low resolution figures
-            self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
+            self.lineFigure = self.checkFigureSize(self.lineFigure)
+            self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(                                     self.lineFigure))
             x, y = self.getWidgetPos(self.displayLineFigure)
             w, h = self.getWidgetDims(self.lineFigure) 
             self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
-            self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect(), self.ratioOption)
+            self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect()                             , self.ratioOption)
         elif self.pathIds[path] == 1:
             self.barFigurePath = path
             self.barFigure.load(path)
-            #self.ratioOption = self.getRatio(self.barFigure)
             self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))
-            self.barFigure = self.barFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
+            self.barFigure = self.checkFigureSize(self.barFigure)
+
             x, y = self.getWidgetPos(self.displayBarFigure)
             w, h = self.getWidgetDims(self.barFigure)
             self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))  
             self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), self.ratioOption)
-            
-            # Test the update position
-            #pos_x = self.horizontalScrollBar().minimum()
-            #self.displayBarFigures.horizontalScrollBar().setSliderPosition(pos_x)
-
         else:
             if self.barFigurePath is None:
                 self.barFigurePath = path
                 self.barFigure.load(path)
-                #self.ratioOption = self.getRatio(self.barFigure)
-                self.barFigure = self.barFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
-                self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))
+                self.barFigure = self.checkFigureSize(self.barFigure)
+                self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(                          self.barFigure))
                 x, y = self.getWidgetPos(self.displayBarFigure)
                 w, h = self.getWidgetDims(self.barFigure)
                 self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))    
-                self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), self.ratioOption)
-
-                # Test the update position
-                #pos_x = self.displayBarFigures.horizontalScrollBar().minimum()
-                #self.displayBarFigures.horizontalScrollBar().setSliderPosition(pos_x)
-
-
+                self.displayBarFigure.fitInView(self.barFigureScene.sceneRect()                            , self.ratioOption)
             elif self.lineFigurePath is None:
                 self.lineFigurePath = path
                 self.lineFigure.load(path)
-                #self.ratioOption = self.getRatio(self.lineFigure)
-                self.lineFigure = self.lineFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
-                self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
+                self.lineFigure = self.checkFigureSize(self.lineFigure)
+                self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(                           self.lineFigure))
                 x, y = self.getWidgetPos(self.displayLineFigure)
                 w, h = self.getWidgetDims(self.lineFigure)
                 self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))  
-                self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect(), self.ratioOption)
+                self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect                            (), self.ratioOption)
         
-        self.setDockSize()
-
     def saveData(self):
         """Saves the data into csv after correction 
         """
