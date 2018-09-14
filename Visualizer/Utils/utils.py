@@ -38,7 +38,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
 
     def okAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
-        self.view.lineFigures.createItem(self.view.lineFigurePath)
+        self.view.lineFigures.createItem(self.view.lineFigurePath, self.view.ratioOption)
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -46,7 +46,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
     def lineAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
         self.view.pathIds[self.view.lineFigurePath] = 0
-        self.view.lineFigures.createItem(self.view.lineFigurePath)
+        self.view.lineFigures.createItem(self.view.lineFigurePath, self.view.ratioOption)
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -54,7 +54,7 @@ class GraphicsLineScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.lineFigurePath] = 1
         self.view.pathIds[self.view.lineFigurePath] = 1
-        self.view.barFigures.createItem(self.view.lineFigurePath)       
+        self.view.barFigures.createItem(self.view.lineFigurePath, self.view.ratioOption)       
         self.view.lineFigurePath = None
         self.view.lineFigureScene.clear()
         self.view.nextLineFigure()
@@ -102,7 +102,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
 
     def okAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
-        self.view.barFigures.createItem(self.view.barFigurePath)
+        self.view.barFigures.createItem(self.view.barFigurePath, self.view.ratioOption)
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()
@@ -110,7 +110,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def lineAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 0
-        self.view.lineFigures.createItem(self.view.barFigurePath)       
+        self.view.lineFigures.createItem(self.view.barFigurePath, self.view.ratioOption)       
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()
@@ -118,7 +118,7 @@ class GraphicsBarScene(QtWidgets.QGraphicsScene):
     def barAction(self):
         self.view.pathCrr[self.view.barFigurePath] = 1
         self.view.pathIds[self.view.barFigurePath] = 1
-        self.view.barFigures.createItem(self.view.barFigurePath)
+        self.view.barFigures.createItem(self.view.barFigurePath, self.view.ratioOption)
         self.view.barFigurePath = None
         self.view.barFigureScene.clear()
         self.view.nextBarFigure()   
@@ -145,15 +145,22 @@ class LineFigures(QtWidgets.QGraphicsScene):
         self.scaleX = 280
         self.scaleY = 400
 
-    def createItem(self, figurePath):
+        '''
+        self.scrollbar = QtWidgets.QScrollBar()
+        self.setHorizontalScrollBar(self.scrollbar)
+        '''
+
+    def createItem(self, figurePath, ratio=QtCore.Qt.IgnoreAspectRatio):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
         self.figure = QtGui.QPixmap(figurePath)
+        self.ratio  = ratio
         self.scale()
         self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
         self.offset = len(self.figuresList)               
-        
+        print(self.figure.rect())
+
         x, y = self.view.getWidgetPos(self.view.displayLineFigures)
         w, h = self.view.getWidgetDims(self.figure)
         
@@ -164,7 +171,8 @@ class LineFigures(QtWidgets.QGraphicsScene):
         else:
             self.arrangeScene(x, y, w, h)
             self.view.lineFigures.addItem(self.figureItem)
-            self.figureItem.setPos(-(self.offset-1)*w,0) 
+            self.figureItem.setPos(-(self.offset-1)*w,0)
+        # self.scrollbar.setSliderPosition(0) 
     
     def arrangeScene(self, x, y, w, h):
         if x+self.offset*w > self.view.screenWidth:
@@ -174,7 +182,7 @@ class LineFigures(QtWidgets.QGraphicsScene):
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
-                            QtCore.Qt.IgnoreAspectRatio, 
+                            self.ratio, 
                             QtCore.Qt.SmoothTransformation) 
     
     def paint(self):
@@ -191,7 +199,10 @@ class LineFigures(QtWidgets.QGraphicsScene):
         qp.drawPixmap(self.brushWidth-1,self.brushWidth-1, self.figure)
         self.figure = picture
         qp.end()
-        # print(picture.rect())
+
+    @QtCore.pyqtSlot(int, int)
+    def changeSliderPos(self, min, max):
+        self.view.displayLineFigures.horizontalScrollBar().setSliderPosition(min)
 
 class BarFigures(QtWidgets.QGraphicsScene):
     """docstring for BarFigures scene
@@ -200,23 +211,25 @@ class BarFigures(QtWidgets.QGraphicsScene):
         super(BarFigures, self).__init__(parent)
         self.view        = parent
         self.figuresList = []
-        
+
         # Painter Options
         self.color      = (182,182,182)
         self.brushWidth = 3
 
         # The fixed size of single figure scene
         self.scaleX     = 280
-        self.scaleY     = 400
+        self.scaleY     = 400       
 
-    def createItem(self, figurePath):
+    def createItem(self, figurePath, ratio=QtCore.Qt.IgnoreAspectRatio):
         self.figureItem = QtWidgets.QGraphicsPixmapItem()
         self.figure = QtGui.QPixmap(figurePath)
+        self.ratio  = ratio
         self.scale()
         self.paint()
         self.figureItem.setPixmap(self.figure)
         self.figuresList.append(self.figureItem)
         self.offset = len(self.figuresList)
+        #print(self.figure.rect())
 
         x, y = self.view.getWidgetPos(self.view.displayBarFigures)
         w, h = self.view.getWidgetDims(self.figure)
@@ -229,7 +242,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
             self.arrangeScene(x, y, w, h)
             self.view.barFigures.addItem(self.figureItem)
             self.figureItem.setPos(-(self.offset-1)*w,0)
-    
+
     def arrangeScene(self, x, y, w, h):
         if  x+self.offset*w > self.view.screenWidth:
             self.view.displayBarFigures.translate(w+2*self.brushWidth,0)
@@ -238,7 +251,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
-                            QtCore.Qt.IgnoreAspectRatio, 
+                            self.ratio, 
                             QtCore.Qt.SmoothTransformation) 
     
     def paint(self):
@@ -255,6 +268,11 @@ class BarFigures(QtWidgets.QGraphicsScene):
         qp.drawPixmap(self.brushWidth-1,self.brushWidth-1, self.figure)
         self.figure = picture
         qp.end()
+
+    @QtCore.pyqtSlot(int, int)
+    def changeSliderPos(self, min, max):
+        self.view.displayBarFigures.horizontalScrollBar().setSliderPosition(min)
+
 
 class Overlay(QtWidgets.QWidget):
     """Overlay widget for loading gif while training 

@@ -16,7 +16,8 @@ try:
     from keras.applications.resnet50 import preprocess_input
     from keras.applications.vgg19 import VGG19
 except ImportError:
-    pass
+    print('Import Error')
+    
 
 from sklearn.externals import joblib
 from sklearn.svm import SVC 
@@ -158,6 +159,7 @@ class Viewer(QtWidgets.QMainWindow):
         self.displayLineFigures = QtWidgets.QGraphicsView(self.lineFigures)
         self.displayBarFigures  = QtWidgets.QGraphicsView(self.barFigures)
 
+        # Set item index method
         self.lineFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
         self.barFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
         
@@ -181,14 +183,34 @@ class Viewer(QtWidgets.QMainWindow):
         gridLayout.setHorizontalSpacing(70)
         gridLayout.setVerticalSpacing(15)
 
-        # Usefull to arrange the size of each widget
-        QtWidgets.QDesktopWidget().screenGeometry()
         self.screenWidth  = QtWidgets.QDesktopWidget().width()
         self.screenHeight = QtWidgets.QDesktopWidget().height()
+
+        # Create slots to update slider initial position
+        self.displayBarFigures.horizontalScrollBar().rangeChanged.connect(self.barFigures.changeSliderPos)
+        self.displayLineFigures.horizontalScrollBar().rangeChanged.connect(self.lineFigures.changeSliderPos)
 
         # Overlay loading widget
         self.overlay = Overlay(self)
         self.overlay.hide()
+
+        #print(gridLayout.cellRect(2,1))
+        self.setDockSize()
+
+    def setDockSize(self):
+        #TODO: needs apprpriate function to deal with variable figure sizes
+        if self.displayLineFigure.sizeHint().isValid():
+            pass
+            #self.displayLineFigure.setMinimumSize(self.displayLineFigure.sizeHint())
+            #self.displayLineFigure.setMaximumSize(self.displayLineFigure.sizeHint())
+            #self.displayLineFigure.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+
+        if self.displayBarFigure.sizeHint().isValid():
+            pass
+            #self.displayBarFigure.setMinimumSize(self.displayBarFigure.sizeHint())
+            #self.displayBarFigure.setMaximumSize(self.displayBarFigure.sizeHint())
+            #self.displayBarFigure.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        
 
     def resizeEvent(self, event):
         """Resize overlay according to widget size
@@ -211,7 +233,6 @@ class Viewer(QtWidgets.QMainWindow):
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
             if self.csvExt in str(fileName):
-                print(fileName)
                 self.loadCsv(str(fileName[0]))
             else:
                 message = 'Only csv files'
@@ -299,47 +320,79 @@ class Viewer(QtWidgets.QMainWindow):
     def getWidgetDims(self, widget):
         return widget.width(), widget.height()
 
+    def getRatio(self, figure):
+        """Method which returns the aspect ratio option according to image size. Useful for low resolution figures
+        """
+
+        # TODO: Add more control in size
+        width, height = self.getWidgetDims(figure)
+        if (width < 200) or (height < 200):
+            return QtCore.Qt.KeepAspectRatio 
+        else: 
+            return QtCore.Qt.IgnoreAspectRatio
+
     def plotFigures(self, path):
         """Method which plots the figures in the scenes
         """
+        self.width  = 500 # self.screenWidth / 2
+        self.height = 400 # self.screenHeight / 2
+        self.ratioOption = QtCore.Qt.IgnoreAspectRatio # debug only
+
         if self.pathIds[path] == 0:
             self.lineFigurePath = path
             self.lineFigure.load(path)
-            self.lineFigure = self.lineFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+            # self.ratioOption = self.getRatio(self.lineFigure)
+            self.lineFigure  = self.lineFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
             # TODO:: ### handle low resolution figures
             self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
             x, y = self.getWidgetPos(self.displayLineFigure)
             w, h = self.getWidgetDims(self.lineFigure) 
             self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
-            self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+            self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect(), self.ratioOption)
         elif self.pathIds[path] == 1:
             self.barFigurePath = path
             self.barFigure.load(path)
+            #self.ratioOption = self.getRatio(self.barFigure)
             self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))
-            self.barFigure = self.barFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+            self.barFigure = self.barFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
             x, y = self.getWidgetPos(self.displayBarFigure)
             w, h = self.getWidgetDims(self.barFigure)
             self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))  
-            self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+            self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), self.ratioOption)
+            
+            # Test the update position
+            #pos_x = self.horizontalScrollBar().minimum()
+            #self.displayBarFigures.horizontalScrollBar().setSliderPosition(pos_x)
+
         else:
             if self.barFigurePath is None:
                 self.barFigurePath = path
                 self.barFigure.load(path)
-                self.barFigure = self.barFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+                #self.ratioOption = self.getRatio(self.barFigure)
+                self.barFigure = self.barFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
                 self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.barFigure))
                 x, y = self.getWidgetPos(self.displayBarFigure)
                 w, h = self.getWidgetDims(self.barFigure)
                 self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))    
-                self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+                self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), self.ratioOption)
+
+                # Test the update position
+                #pos_x = self.displayBarFigures.horizontalScrollBar().minimum()
+                #self.displayBarFigures.horizontalScrollBar().setSliderPosition(pos_x)
+
+
             elif self.lineFigurePath is None:
                 self.lineFigurePath = path
                 self.lineFigure.load(path)
-                self.lineFigure = self.lineFigure.scaled(500, 400, QtCore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)
+                #self.ratioOption = self.getRatio(self.lineFigure)
+                self.lineFigure = self.lineFigure.scaled(self.width, self.height, self.ratioOption, QtCore.Qt.SmoothTransformation)
                 self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(self.lineFigure))
                 x, y = self.getWidgetPos(self.displayLineFigure)
                 w, h = self.getWidgetDims(self.lineFigure)
                 self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))  
-                self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect(), QtCore.Qt.IgnoreAspectRatio)
+                self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect(), self.ratioOption)
+        
+        self.setDockSize()
 
     def saveData(self):
         """Saves the data into csv after correction 
@@ -410,7 +463,18 @@ class Viewer(QtWidgets.QMainWindow):
     def saveSvmModel(self, model):
         """Needs to be reimplemented with proper gui
         """
-        joblib.dump(model, 'model.pkl')
+                # Create the save dialog box
+        name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Model Parameters',
+        '', 'pkl files (*.pkl)', 'pkl file (*.pkl)')
+
+        if not name:
+            return
+        # Check the extension when saving
+        if self.joblibExt in name:
+            joblib.dump(model, name)
+        else:
+            message = 'Error saving file {}.'.format(name)
+            self.messageBox(message)
 
     def svmClassifier(self, feats, labels, coef=12.):
         return SVC(C=coef).fit(feats, labels)
@@ -444,7 +508,7 @@ class Viewer(QtWidgets.QMainWindow):
         """
         message = self.applicationTitle + '\n\n'
         message += 'INSTRUCTIONS\n'
-        message += ' - If you do not have any csv files with annotated figures, select the folder which contains the set of biomedical academic files and the tool extracts the \'jpg\' figures only\n'
+        message += ' - If you do not have any csv file with annotated figures, select the folder which contains the set of biomedical academic files and the tool extracts the \'jpg\' figures only\n'
         message += ' - Annotate some figures by clicking right click and select the label to annotate\n' 
         message += ' - Click the training button to get some predictions in order to classify the rest figures automatically\n\n'
         message += 'CONTROLS\n'
