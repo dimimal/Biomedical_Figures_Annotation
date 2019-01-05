@@ -244,7 +244,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
         if  x+self.offset*w > self.view.screenWidth:
             self.view.displayBarFigures.translate(w+2*self.brushWidth,0)
         else:
-            self.view.displayBarFigures.setGeometry(QtCore.QRect(x, y,      self.offset*w+2*self.brushWidth, h))
+            self.view.displayBarFigures.setGeometry(QtCore.QRect(x, y,                  self.offset*w+2*self.brushWidth, h))
 
     def scale(self):
         self.figure = self.figure.scaled(self.scaleX, self.scaleY, 
@@ -253,7 +253,7 @@ class BarFigures(QtWidgets.QGraphicsScene):
     
     def paint(self):
         # Add bounding frame        
-        picture      = QtGui.QPixmap(self.figure.width()+2*self.brushWidth-1,                         self.figure.height()+2*self.brushWidth-1)
+        picture = QtGui.QPixmap(self.figure.width()+2*self.brushWidth-1,                    self.figure.height()+2*self.brushWidth-1)
 
         # Create Painter
         qp  = QtGui.QPainter(picture)

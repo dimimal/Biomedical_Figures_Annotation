@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5 import QtCore
 
 import sys
-import random 
+import random
 import pandas as pd
 import os
 import numpy as np
@@ -17,15 +17,15 @@ try:
     from keras.applications.vgg19 import VGG19
 except ImportError:
     print('Import Error')
-    
 
 from sklearn.externals import joblib
-from sklearn.svm import SVC 
-from Utils.utils import (GraphicsLineScene, 
-                         GraphicsBarScene, 
-                         LineFigures, 
+from sklearn.svm import SVC
+from Utils.utils import (GraphicsLineScene,
+                         GraphicsBarScene,
+                         LineFigures,
                          BarFigures,
                          Overlay)
+
 
 class Viewer(QtWidgets.QMainWindow):
     """The main window of the annotator
@@ -39,27 +39,27 @@ class Viewer(QtWidgets.QMainWindow):
 
         self.pathIds   = {}
         self.pathCrr   = {}
-        
-        # Init the ratio of widget scene
-        self.ratioOption = QtCore.Qt.IgnoreAspectRatio 
 
-        # Initialize the figures 
+        # Init the ratio of widget scene
+        self.ratioOption = QtCore.Qt.IgnoreAspectRatio
+
+        # Initialize the figures
         self.lineFigure = QtGui.QImage()
-        self.barFigure  = QtGui.QImage() 
-        
-        # Hold the path for each figure frame      
+        self.barFigure  = QtGui.QImage()
+
+        # Hold the path for each figure frame
         self.barFigurePath  = None
         self.lineFigurePath = None
 
         # Set title
         self.applicationTitle = 'BioTool Annotator v1.0'
-        self.setWindowTitle(self.applicationTitle)        
+        self.setWindowTitle(self.applicationTitle)
 
         # Instantiate the window
         self.initUI()
 
     def initUI(self):
-        """Initialize the UI 
+        """Initialize the UI
         """
 
         # Instantiate toolbar
@@ -67,47 +67,45 @@ class Viewer(QtWidgets.QMainWindow):
         self.toolbar.setMovable(False)
 
         # Add the tool buttons
-        iconDir = os.path.join( os.path.dirname(sys.argv[0]) , 'icons' )
-        loadAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'open.png' )), '&Tools', self)
+        iconDir = os.path.join(os.path.dirname(sys.argv[0]), 'icons')
+        loadAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'open.png')), '&Tools', self)
         loadAction.setShortcuts(['Ctrl+O'])
-        loadAction.triggered.connect( self.loadPredictions )
+        loadAction.triggered.connect(self.loadPredictions)
         self.toolbar.addAction(loadAction)
         loadAction.setToolTip('Select folder')
 
-        
         # Open the csv file action
-        csvAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'csv.png' )), '&Tools', self)
+        csvAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'csv.png')), '&Tools', self)
         csvAction.setShortcuts(['Ctrl+C'])
-        csvAction.triggered.connect( self.openCsv )
+        csvAction.triggered.connect(self.openCsv)
         self.toolbar.addAction(csvAction)
-        csvAction.setToolTip('Open Csv')                 
+        csvAction.setToolTip('Open Csv')
 
-        saveAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'save.png' )), '&Tools', self)
+        saveAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'save.png')), '&Tools', self)
         saveAction.triggered.connect(self.saveData)
         saveAction.setToolTip('Save File')
         saveAction.setShortcuts(['Ctrl+S'])
         self.toolbar.addAction(saveAction)
 
         # Save file to csv
-        trainAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'learning.png' )), '&Tools', self)
+        trainAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'learning.png')), '&Tools', self)
         trainAction.triggered.connect(self.trainModel)
         trainAction.setToolTip('Train Model')
         trainAction.setShortcuts(['Ctrl+L'])
         self.toolbar.addAction(trainAction)
 
-        helpAction = QtWidgets.QAction(QtGui.QIcon(os.path.join( iconDir , 'help19.png' )), '&Tools', self)
+        helpAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'help19.png')), '&Tools', self)
         helpAction.triggered.connect(self.displayHelpMessage)
         helpAction.setToolTip('Help')
         helpAction.setShortcuts(['Ctrl+H'])
         self.toolbar.addAction(helpAction)
-        
+
         # Close the application
-        exitAction = QtWidgets.QAction(QtGui.QIcon( os.path.join( iconDir , 'exit.png' )), '&Tools', self)
+        exitAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(iconDir, 'exit.png')), '&Tools', self)
         exitAction.setShortcuts(['Esc'])
-        exitAction.triggered.connect( self.close )
+        exitAction.triggered.connect(self.close)
         self.toolbar.addAction(exitAction)
         exitAction.setToolTip('Exit')
-
 
         self.defaultStatusBar = 'Ready'
         self.statusBar().showMessage(self.defaultStatusBar)
@@ -118,13 +116,13 @@ class Viewer(QtWidgets.QMainWindow):
 
         # Init docked widgets
         self.initDocks()
-        
+
         # Open main window in full screen
         self.showFullScreen()
-        
+
         # Show
         self.show()
-        
+
         # Display the help message
         self.displayHelpMessage()
 
@@ -132,19 +130,19 @@ class Viewer(QtWidgets.QMainWindow):
         """Initialize the docks inside the Main window
         """
         # Define the grid of widgets
-        gridLayout = QtWidgets.QGridLayout()      
+        gridLayout = QtWidgets.QGridLayout()
         gridLayout.setOriginCorner(QtCore.Qt.TopLeftCorner)
-        
+
         # Set QWidget object as main window in order to develop the appropriate functions
         widget = QtWidgets.QWidget(self)
         widget.setLayout(gridLayout)
         self.setCentralWidget(widget)
-        
-        # Set the text font 
+
+        # Set the text font
         font = QtGui.QFont()
         font.setPointSize(14)
-        font.setBold(True)        
-        
+        font.setBold(True)
+
         # Add figure widget scenes
         self.lineFigureScene = GraphicsLineScene(self)
         self.barFigureScene  = GraphicsBarScene(self)
@@ -152,11 +150,11 @@ class Viewer(QtWidgets.QMainWindow):
         # Init view windows
         self.displayLineFigure = QtWidgets.QGraphicsView()
         self.displayBarFigure  = QtWidgets.QGraphicsView()
-        
+
         self.displayLineFigure.setScene(self.lineFigureScene)
         self.displayBarFigure.setScene(self.barFigureScene)
 
-        # Initialize the classification scenes 
+        # Initialize the classification scenes
         self.lineFigures = LineFigures(self)
         self.barFigures  = BarFigures(self)
         self.displayLineFigures = QtWidgets.QGraphicsView(self.lineFigures)
@@ -165,16 +163,16 @@ class Viewer(QtWidgets.QMainWindow):
         # Set item index method
         self.lineFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
         self.barFigures.setItemIndexMethod(QtWidgets.QGraphicsScene.BspTreeIndex)
-        
-        # Define text widgets 
+
+        # Define text widgets
         lineText = QtWidgets.QLabel()
         lineText.setFont(font)
         lineText.setText('Line Figures Classification')
         #
         barText = QtWidgets.QLabel()
         barText.setFont(font)
-        barText.setText('Bar Figures Classification')        
-        
+        barText.setText('Bar Figures Classification')
+
         # Add widgets to grid layout
         gridLayout.addWidget(lineText, 1, 0, 1, -1, QtCore.Qt.AlignHCenter)
         gridLayout.addWidget(barText, 3, 0, 1, -1, QtCore.Qt.AlignHCenter)
@@ -204,16 +202,16 @@ class Viewer(QtWidgets.QMainWindow):
         self.overlay.resize(event.size())
         # Move gif to the center of the widget
         self.overlay.move(self.rect().center() - self.overlay.rect().center())
-    
+
     def openCsv(self):
         dir_path     = os.path.dirname(os.path.realpath(__file__))
-        message      = 'Select csv file' 
+        message      = 'Select csv file'
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
         folderDialog.setNameFilter('CSV files (*.csv)')
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         fileName   = [] # Returns a list of the directory
-        
+
         # Plot the window to select the csv file
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
@@ -222,22 +220,22 @@ class Viewer(QtWidgets.QMainWindow):
             else:
                 message = 'Only csv files'
                 self.messageBox(message)
-                return 
+                return
 
         self.selectFigures()
 
     def loadPredictions(self):
-        """Load the joblib or csv file which contains the dictionary of 
+        """Load the joblib or csv file which contains the dictionary of
         predictions
         """
 
         dir_path     = os.path.dirname(os.path.realpath(__file__))
-        message      = 'Select folder' 
+        message      = 'Select folder'
         folderDialog = QtWidgets.QFileDialog(self, message, dir_path)
         folderDialog.setFileMode(QtWidgets.QFileDialog.Directory)
         folderDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         fileName   = [] # Returns a list of the directory
-        
+
         # Plot the window to select the csv file
         if folderDialog.exec_():
             fileName = folderDialog.selectedFiles()
@@ -252,13 +250,13 @@ class Viewer(QtWidgets.QMainWindow):
                 return
 
         self.selectFigures()
-    
+
     def loadFolder(self, path):
         # Iterate through folders and get jpg files
         paths = []
         for root, dirs, files in os.walk(path):
             for file_ in files:
-                if self.imageExt in file_:   
+                if self.imageExt in file_:
                     paths.append(os.path.join(root, file_))
 
         self.pathCrr = {path:0 for path in paths}
@@ -268,7 +266,7 @@ class Viewer(QtWidgets.QMainWindow):
         data = pd.read_csv(file, header=None, names=['path', 'id', 'cid'])
         self.pathIds = data.set_index('path').to_dict()['id']
         self.pathCrr = data.set_index('path').to_dict()['cid']
-    
+
     def nextLineFigure(self):
         for path, cid in self.pathCrr.items():
             if cid == 0 and (self.pathIds[path] == 0 or self.pathIds[path] == 2):
@@ -286,20 +284,20 @@ class Viewer(QtWidgets.QMainWindow):
                 break
 
     def selectFigures(self):
-        """Go through figures from the loaded file  
+        """Go through figures from the loaded file
         """
-        # Shuffle the dictionary 
+        # Shuffle the dictionary
         dict_items = list(self.pathCrr.items())
         random.shuffle(dict_items)
         self.pathCrr = {}
         self.pathCrr = {key:value for (key,value) in dict_items}
-        
+
         self.nextBarFigure()
         self.nextLineFigure()
 
 
     def getWidgetPos(self, widget):
-        return widget.x(), widget.y() 
+        return widget.x(), widget.y()
 
     def getWidgetDims(self, widget):
         return widget.width(), widget.height()
@@ -324,16 +322,16 @@ class Viewer(QtWidgets.QMainWindow):
     def plotFigures(self, path):
         """Method which plots the figures in the scenes
         """
-        self.width  = 500 
-        self.height = 400 
-        
+        self.width  = 500
+        self.height = 400
+
         if self.pathIds[path] == 0:
             self.lineFigurePath = path
             self.lineFigure.load(path)
             self.lineFigure = self.checkFigureSize(self.lineFigure)
             self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(                                     self.lineFigure))
             x, y = self.getWidgetPos(self.displayLineFigure)
-            w, h = self.getWidgetDims(self.lineFigure) 
+            w, h = self.getWidgetDims(self.lineFigure)
             self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
             self.displayLineFigure.fitInView(self.displayLineFigure.sceneRect()                             , self.ratioOption)
         elif self.pathIds[path] == 1:
@@ -344,7 +342,7 @@ class Viewer(QtWidgets.QMainWindow):
 
             x, y = self.getWidgetPos(self.displayBarFigure)
             w, h = self.getWidgetDims(self.barFigure)
-            self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))  
+            self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))
             self.displayBarFigure.fitInView(self.barFigureScene.sceneRect(), self.ratioOption)
         else:
             if self.barFigurePath is None:
@@ -354,7 +352,7 @@ class Viewer(QtWidgets.QMainWindow):
                 self.barFigureScene.addPixmap(QtGui.QPixmap.fromImage(                          self.barFigure))
                 x, y = self.getWidgetPos(self.displayBarFigure)
                 w, h = self.getWidgetDims(self.barFigure)
-                self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))    
+                self.displayBarFigure.setGeometry(QtCore.QRect(x,y,w,h))
                 self.displayBarFigure.fitInView(self.barFigureScene.sceneRect()                            , self.ratioOption)
             elif self.lineFigurePath is None:
                 self.lineFigurePath = path
@@ -363,11 +361,11 @@ class Viewer(QtWidgets.QMainWindow):
                 self.lineFigureScene.addPixmap(QtGui.QPixmap.fromImage(                           self.lineFigure))
                 x, y = self.getWidgetPos(self.displayLineFigure)
                 w, h = self.getWidgetDims(self.lineFigure)
-                self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))  
+                self.displayLineFigure.setGeometry(QtCore.QRect(x,y,w,h))
                 self.displayLineFigure.fitInView(self.lineFigureScene.sceneRect                            (), self.ratioOption)
-        
+
     def saveData(self):
-        """Saves the data into csv after correction 
+        """Saves the data into csv after correction
         """
         pdIds = pd.DataFrame.from_dict(self.pathIds, orient='index')
         pdCrr = pd.DataFrame.from_dict(self.pathCrr, orient='index', columns=['cid'])
@@ -409,7 +407,7 @@ class Viewer(QtWidgets.QMainWindow):
             if cid == 1:
                 figure  = self.loadImage(path, sampleSize=(img_rows, img_cols))
                 yLabels = np.append(yLabels, np.float(self.pathIds[path]))
-                y_pred  = model.predict(figure, verbose=1)    
+                y_pred  = model.predict(figure, verbose=1)
                 allPaths.append(path)
 
                 # check dimensions
@@ -431,7 +429,7 @@ class Viewer(QtWidgets.QMainWindow):
         self.overlay.hide() # Hide Logo
         self.statusBar().showMessage(self.defaultStatusBar)
         self.selectFigures()
-    
+
     def saveSvmModel(self, model):
         """Needs to be reimplemented with proper gui
         """
@@ -481,7 +479,7 @@ class Viewer(QtWidgets.QMainWindow):
         message = self.applicationTitle + '\n\n'
         message += 'INSTRUCTIONS\n'
         message += ' - If you do not have any csv file with annotated figures, select the folder which contains the set of biomedical academic files and the tool extracts the \'jpg\' figures only\n'
-        message += ' - Annotate some figures by clicking right click and select the label to annotate\n' 
+        message += ' - Annotate some figures by clicking right click and select the label to annotate\n'
         message += ' - Click the training button to get some predictions in order to classify the rest figures automatically\n\n'
         message += 'CONTROLS\n'
         message += ' - Select folder [ctrl+O]\n'
@@ -497,7 +495,7 @@ class Viewer(QtWidgets.QMainWindow):
     # Destructor
     def __del__(self):
         return
-                         
+
 if __name__ == '__main__':
     application = QtWidgets.QApplication(sys.argv)
     view        = Viewer()
